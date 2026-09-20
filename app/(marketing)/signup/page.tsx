@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { Backdrop, Button, Field } from '@/components/ui';
 import { Flag } from '@/components/brand';
 import { COUNTRIES, type CountryCode } from '@/lib/mock-data';
@@ -35,7 +34,7 @@ export default function Signup() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  // Back from Google (or a half-finished earlier sign-up): already signed in, only the country is missing.
+  // Reloaded after the code step (or a half-finished earlier sign-up): already signed in, only the country is missing.
   useEffect(() => {
     if (status !== 'authenticated' || step !== 1 || awaiting || session?.user?.country) return;
     setName(session?.user?.name ?? '');
@@ -128,11 +127,13 @@ export default function Signup() {
                 <Field label={isLive ? 'Email' : 'Email or phone'}><input className="input" type={isLive ? 'email' : 'text'} value={email} onChange={(e) => setEmail(e.target.value)} placeholder={isLive ? 'you@email.com' : 'you@email.com or +234…'} autoComplete="email" required /></Field>
                 {err && <p role="alert" className="text-[13.5px] font-medium text-[#B0456A]">{err}</p>}
                 <Button type="submit" size="lg" full disabled={busy}>{busy ? 'Sending code…' : 'Continue'}</Button>
+                {!isLive && <>
                 <div className="flex items-center gap-3 text-[12.5px] text-[#9C8FCB]"><span className="h-px flex-1 bg-[#E8DFFA]" />or<span className="h-px flex-1 bg-[#E8DFFA]" /></div>
-                <button type="button" disabled={busy} onClick={() => { if (isLive) { setBusy(true); signIn('google', { callbackUrl: '/signup' }); } else { setName(name || 'Rhydar'); setEmail(email || 'rhydar@gmail.com'); setStep(2); } }} className="btn w-full bg-lilac-2 py-3.5 text-[15.5px] text-ink hover:bg-lilac">
+                <button type="button" onClick={() => { setName(name || 'Rhydar'); setEmail(email || 'rhydar@gmail.com'); setStep(2); }} className="btn w-full bg-lilac-2 py-3.5 text-[15.5px] text-ink hover:bg-lilac">
                   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.5l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" /><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z" /><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z" /><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z" /></svg>
                   Continue with Google
                 </button>
+                </>}
                 <p className="text-center text-[12.5px] text-[#9C8FCB]">No wallet needed. No crypto knowledge needed.</p>
               </form>
             )}

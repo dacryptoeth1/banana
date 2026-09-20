@@ -1,5 +1,4 @@
 import NextAuth from 'next-auth';
-import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import { COUNTRIES, type CountryCode } from '@/lib/mock-data';
 import { normalizeEmail, verifyChallenge } from '@/lib/otp';
@@ -9,8 +8,6 @@ const isCountry = (c: unknown): c is CountryCode => COUNTRIES.some((x) => x.code
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 },
   providers: [
-    // Reads AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET from the environment.
-    Google,
     // Email-code sign-in. POST /api/auth/otp/verify checks the code, then calls signIn('otp'); authorize()
     // checks it again so this provider can't be hit directly with just an email address.
     Credentials({
@@ -25,10 +22,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    signIn({ account, profile }) {
-      if (account?.provider === 'google') return profile?.email_verified === true;
-      return true;
-    },
     jwt({ token, user, trigger, session }) {
       if (user) {
         token.name = user.name;
