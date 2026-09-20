@@ -23,6 +23,27 @@ npm run build && npm start
 
 Use **Demo → Reset demo** in the avatar menu (top right, inside the app) to start the story over.
 
+## Demo vs live
+
+`NEXT_PUBLIC_BANANA_MODE` picks the mode. It is read at build time, so change it and redeploy.
+
+| | `demo` (default) | `live` |
+|---|---|---|
+| Sign-up | Prefilled, no real account | Email code (Resend) or Google, via next-auth v5 |
+| Avatar menu | Demo personas + **Reset demo** | **Sign out** (no personas / reset) |
+| `/api/auth/otp/*` | 404 | Active |
+| App data | `localStorage` | `localStorage` (no backend yet) |
+
+Live setup: copy `.env.example` to `.env.local` and fill it in.
+
+- `AUTH_SECRET`: `npx auth secret`
+- `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`: redirect URI `{origin}/api/auth/callback/google`
+- `RESEND_API_KEY` / `EMAIL_FROM`: sender on a domain verified in Resend. Without them, `next dev` prints the code to the server console; production returns an error.
+
+How the email code works: `POST /api/auth/otp/send {email, name}` emails a 6-digit code and sets a signed, httpOnly challenge cookie (10 min); `POST /api/auth/otp/verify {email, code}` checks it and starts the session. There is no database, so the challenge is stateless. The session (JWT) carries `name`, `email` and `country`; the country is added when the user picks it on the signup page. After sign-up, `signUp()` fills the localStorage state as before, so Home / Learn / Wallet are unchanged. Signing out clears that local state.
+
+Known limits: the attempt and send throttles are in memory (per server instance), and app pages are not gated behind a session yet.
+
 ## Structure
 
 ```

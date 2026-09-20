@@ -2,10 +2,12 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
+import { signOut } from 'next-auth/react';
 import { Logo, Flag, Avatar } from './brand';
 import { COUNTRIES } from '@/lib/mock-data';
 import { RATES, SYMBOL, cn, type Currency } from '@/lib/format';
 import { resetDemo, setCurrency, switchRole, useBanana } from '@/lib/state';
+import { isLive } from '@/lib/mode';
 
 const TABS = [
   { href: '/home', label: 'Home', icon: 'M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z' },
@@ -22,6 +24,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const s = useBanana();
   const [menu, setMenu] = useState(false);
+
+  async function handleSignOut() {
+    setMenu(false);
+    await signOut({ redirect: false });
+    resetDemo(); // this browser's wallet and lessons belong to the account that just left
+    router.push('/');
+  }
 
   return (
     <div className="relative min-h-screen pb-24 md:pb-10">
@@ -49,6 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <div className="truncate text-[13px] text-[#7A6BAE]">{s.user.email}</div>
                   </div>
                 </div>
+                {!isLive && (<>
                 <div className="mt-4 text-[12px] font-semibold uppercase tracking-wider text-[#8A7BBF]">Demo</div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {([['seller', 'NG', 'Seller', 'Nigeria · ₦'], ['buyer', 'GH', 'Buyer', 'Ghana · GH₵']] as const).map(([r, code, label, sub]) => (
@@ -59,6 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   ))}
                 </div>
                 <button onClick={() => { resetDemo(); setMenu(false); router.push('/'); }} className="mt-2 w-full rounded-xl px-3 py-2.5 text-left text-[14px] font-semibold text-[#B0456A] ring-1 ring-inset ring-[#F0D5DE] hover:bg-[#FFF3F6]">Reset demo</button>
+                </>)}
                 <div className="mt-4 text-[12px] font-semibold uppercase tracking-wider text-[#8A7BBF]">Country and currency</div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {(['NGN', 'GHS', 'KES', 'ZAR'] as Currency[]).map((c) => (
@@ -70,6 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="mt-3 text-[12.5px] text-[#7A6BAE]">Rates are demo values ({SYMBOL.NGN}{RATES.NGN.toLocaleString()} ≈ $1).</div>
                 <div className="mt-3 flex flex-col gap-1 border-t border-[#EDE6FF] pt-3 text-[14px]">
                   <Link href="/" onClick={() => setMenu(false)} className="rounded-lg px-2 py-2 hover:bg-lilac-2">Marketing site</Link>
+                  {isLive && <button onClick={handleSignOut} className="rounded-lg px-2 py-2 text-left font-semibold text-[#B0456A] hover:bg-[#FFF3F6]">Sign out</button>}
                 </div>
               </div>
             )}
