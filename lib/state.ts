@@ -12,6 +12,8 @@ export type Sale = {
   id: string; productId: string; title: string; handle: string;
   grossUsd: number; netUsd: number; buyerEmail: string; buyerCountry: CountryCode; method: string;
   payout: Payout; at: number; ref: string;
+  /** Live mode only: the Paystack reference this sale was recorded for. */
+  paystackRef?: string;
 };
 export type Payout = 'usdc' | 'local' | 'banana';
 export type BountyStatus = 'started' | 'submitted' | 'paid';
@@ -180,11 +182,14 @@ export function payBounty(id: string, title: string, org: string, usdc: number) 
 }
 
 /** A buyer paid in local money → the store owner is settled in stablecoin. Works from either persona. Returns the sale. */
-export function recordSale(input: { product: Product; grossUsd: number; buyerEmail: string; buyerCountry: CountryCode; method: string; sellerHandle: string }): Sale {
+export function recordSale(input: { product: Product; grossUsd: number; buyerEmail: string; buyerCountry: CountryCode; method: string; sellerHandle: string; paystackRef?: string }): Sale {
   const fee = 0.02;
   const netUsd = +(input.grossUsd * (1 - fee)).toFixed(2);
   let sale!: Sale;
   update((s) => {
+    // Same Paystack payment seen twice (reload on the return URL): hand back the sale, don't credit again.
+    const seen = input.paystackRef ? s.sales.find((x) => x.paystackRef === input.paystackRef) : undefined;
+    if (seen) { sale = seen; return s; }
     const other: Role = s.role === 'seller' ? 'buyer' : 'seller';
     const ownerRole: Role | null = s.user.handle === input.sellerHandle ? s.role : s.stash[other]?.user.handle === input.sellerHandle ? other : null;
     const owner: Slice | undefined = ownerRole === null ? undefined : ownerRole === s.role ? sliceOf(s) : s.stash[ownerRole];
@@ -202,6 +207,7 @@ export function recordSale(input: { product: Product; grossUsd: number; buyerEma
       payout,
       at: Date.now(),
       ref: fakeHash(),
+      paystackRef: input.paystackRef,
     };
     const withSale = { ...s, sales: [sale, ...s.sales] };
     if (!owner || ownerRole === null) return withSale; // some other store: the buyer just gets a receipt

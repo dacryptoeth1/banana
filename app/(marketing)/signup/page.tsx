@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Backdrop, Button, Field } from '@/components/ui';
 import { Flag } from '@/components/brand';
@@ -135,6 +136,7 @@ export default function Signup() {
                 </button>
                 </>}
                 <p className="text-center text-[12.5px] text-[#9C8FCB]">No wallet needed. No crypto knowledge needed.</p>
+                {isLive && <p className="text-center text-[13.5px] text-[#5A4A93]">Already have an account? <Link href="/signin" className="font-semibold text-violet hover:underline">Sign in</Link></p>}
               </form>
             )}
             {step === 2 && (

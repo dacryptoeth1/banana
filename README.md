@@ -41,6 +41,8 @@ Live setup: copy `.env.example` to `.env.local` and fill it in.
 
 How the email code works: `POST /api/auth/otp/send {email, name}` emails a 6-digit code and sets a signed, httpOnly challenge cookie (10 min); `POST /api/auth/otp/verify {email, code}` checks it and starts the session. There is no database, so the challenge is stateless. The session (JWT) carries `name`, `email` and `country`; the country is added when the user picks it on the signup page. After sign-up, `signUp()` fills the localStorage state as before, so Home / Learn / Wallet are unchanged. Signing out clears that local state.
 
+**Paystack (TEST keys only).** In live mode, **Pay** calls `POST /api/pay/initialize` (the server recomputes the price from the product, in kobo) and redirects to Paystack's checkout. Paystack returns the buyer to the product page with `?reference=…`; the page calls `GET /api/pay/verify` and only then records the sale, once per reference. `POST /api/pay/webhook` checks `x-paystack-signature` and acknowledges `charge.success`, but can't record the sale itself: there is no server-side store yet, and `recordSale()` writes to the buyer's localStorage. Set `PAYSTACK_SECRET_KEY` (an `sk_test_…` key; live keys are refused). In demo mode, Pay is still the fake button. Test card: `4084 0840 8408 4081`, any future expiry, CVV `408`. For the webhook to reach your machine, expose it (e.g. a tunnel) and add `{origin}/api/pay/webhook` under Test webhooks in the Paystack dashboard; checkout works without it.
+
 Known limits: the attempt and send throttles are in memory (per server instance), and app pages are not gated behind a session yet.
 
 ## Structure
