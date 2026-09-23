@@ -36,8 +36,8 @@ export default function MarketHome() {
           {list.map((p, i) => {
             const st = store(p.handle);
             return (
-              <Link key={p.id} href={`/store/${p.handle}/${p.id}`} className={`${i % 2 ? 'card-lilac' : 'card'} group !p-3 transition hover:-translate-y-0.5`}>
-                <ProductArt kind={p.art} className="h-36 rounded-xl" />
+              <Link key={p.id} href={`/store/${p.handle}/${p.id}`} className={`${i % 2 ? 'card-lilac' : 'card'} product-card group !p-3`}>
+                <ProductArt kind={p.art} className="product-art h-36 rounded-xl" />
                 <div className="mt-3 px-1">
                   <div className="flex items-center gap-2 text-[12.5px] text-[#6B5BA3]">
                     {st ? <Flag code={st.country} className="h-[11px] w-[16px]" /> : <Flag code={s.user.country} className="h-[11px] w-[16px]" />} @{p.handle} · {p.category}
@@ -45,7 +45,7 @@ export default function MarketHome() {
                   <div className="mt-1.5 text-[17px] font-semibold leading-snug tracking-tight">{p.title}</div>
                   <div className="mt-3 flex items-center justify-between pb-1">
                     <span className="text-[20px] font-bold tracking-tight">{money(p.price.amount, p.price.currency)}</span>
-                    <span className="btn bg-violet px-4 py-1.5 text-[13px] text-white">Buy</span>
+                    <span className="btn buy-pill bg-violet px-4 py-1.5 text-[13px] text-white">Buy <span className="buy-arrow">→</span></span>
                   </div>
                 </div>
               </Link>

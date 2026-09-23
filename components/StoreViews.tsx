@@ -63,12 +63,12 @@ export function StoreView({ handle }: { handle: string }) {
 
       <div className="well mt-8 grid gap-3 sm:grid-cols-2">
         {products.map((p, i) => (
-          <Link key={p.id} href={`/store/${handle}/${p.id}`} className={`${i % 3 === 1 ? 'card-lilac' : 'card'} group flex items-center gap-4 !p-3 transition hover:-translate-y-0.5`}>
-            <ProductArt kind={p.art} className="h-[104px] w-[104px] shrink-0 rounded-xl" />
+          <Link key={p.id} href={`/store/${handle}/${p.id}`} className={`${i % 3 === 1 ? 'card-lilac' : 'card'} product-card group flex items-center gap-4 !p-3`}>
+            <ProductArt kind={p.art} className="product-art h-[104px] w-[104px] shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1">
               <div className="text-[16.5px] font-semibold leading-snug tracking-tight">{p.title}</div>
               <div className="mt-1 text-[19px] font-bold tracking-tight">{money(p.price.amount, p.price.currency)}</div>
-              <span className="btn mt-2 bg-violet px-4 py-1.5 text-[12.5px] text-white">Buy</span>
+              <span className="btn buy-pill mt-2 bg-violet px-4 py-1.5 text-[12.5px] text-white">Buy <span className="buy-arrow">→</span></span>
             </div>
           </Link>
         ))}

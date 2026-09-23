@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { Logo, Flag } from '@/components/brand';
 import { Button } from '@/components/ui';
+import { AmbientBackground } from '@/components/LandingVisuals';
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative overflow-x-clip">
+    <div className="relative isolate overflow-x-clip">
+      <AmbientBackground />
       <div className="flex h-11 items-center justify-center gap-3 border-b border-white/10 bg-[#140642]/45 px-3 text-[13.5px] text-[#E9E0FF] sm:text-[14.5px]">
         <span className="flex items-center gap-2"><Flag code="NG" /> <span className="opacity-80">→</span> <Flag code="GH" /></span>
         <b className="font-medium">Cross-border checkout is live</b>

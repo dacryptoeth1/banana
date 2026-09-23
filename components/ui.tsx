@@ -18,7 +18,7 @@ type BtnProps = {
 export function Button({ children, variant = 'primary', size = 'md', href, onClick, disabled, type = 'button', className, full }: BtnProps) {
   const sizes = { sm: 'px-4 py-2 text-[13.5px]', md: 'px-6 py-3 text-[15.5px]', lg: 'px-8 py-[18px] text-[18px]' }[size];
   const variants = {
-    primary: 'bg-violet text-white shadow-cta ring-1 ring-inset ring-white/20 hover:bg-violet-soft',
+    primary: 'btn-primary bg-violet text-white shadow-cta ring-1 ring-inset ring-white/20 hover:bg-violet-soft',
     light: 'bg-white text-ink shadow-[0_8px_20px_-8px_rgba(10,0,50,.5)] hover:bg-lilac-2',
     ghost: 'text-white/90 ring-1 ring-inset ring-white/25 hover:bg-white/10',
     soft: 'bg-lilac-2 text-ink hover:bg-lilac',

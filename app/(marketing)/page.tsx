@@ -3,30 +3,36 @@ import { Backdrop, Accent, Button, SectionLabel } from '@/components/ui';
 import { ProductArt, Avatar } from '@/components/brand';
 import { MONTH, CATEGORIES, WEEK, LESSONS, OPPORTUNITIES, PRODUCTS } from '@/lib/mock-data';
 import { money } from '@/lib/format';
+import { stagger } from '@/lib/motion';
+import { CountUp, Reveal } from '@/components/motion';
+import { HeroFloat, MarketPulse } from '@/components/LandingMotion';
+import { CategoryTiles, SaleFlow } from '@/components/LandingVisuals';
 
 function Section({ n, id, label, title, copy, cta, children, flip }: { n: number; id: string; label: string; title: string; copy: string; cta: { href: string; label: string }; children: React.ReactNode; flip?: boolean }) {
   return (
     <section id={id} className="relative mx-auto max-w-[1180px] scroll-mt-10 px-4 py-14 sm:px-6 sm:py-20">
-      <div className={`grid items-center gap-10 lg:grid-cols-2 lg:gap-16 ${flip ? 'lg:[&>*:first-child]:order-2' : ''}`}>
-        <div>
+      <Reveal className={`grid items-center gap-10 lg:grid-cols-2 lg:gap-16 ${flip ? 'lg:[&>*:first-child]:order-2' : ''}`}>
+        <div className="reveal-item">
           <SectionLabel n={n} total={5} label={label} />
           <h2 className="mt-4 text-[38px] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[50px]">{title}</h2>
           <p className="mt-5 max-w-md text-[18px] leading-relaxed text-body">{copy}</p>
-          <div className="mt-7"><Button href={cta.href} variant="ghost">{cta.label} →</Button></div>
+          <div className="mt-7"><Button href={cta.href} variant="ghost">{cta.label} <span className="btn-arrow">→</span></Button></div>
         </div>
-        <div className="well">{children}</div>
-      </div>
+        <div className="well reveal-item" style={stagger(1)}>{children}</div>
+      </Reveal>
     </section>
   );
 }
 
 export default function Landing() {
   const max = Math.max(...WEEK.map((w) => Math.max(w.in, w.out)));
+  const net = MONTH.income - MONTH.expenses;
   return (
     <>
       {/* ------------------------------ HERO ------------------------------ */}
       <div className="relative">
         <Backdrop height={760} />
+        <HeroFloat />
         <section className="relative mx-auto max-w-[1180px] px-4 pb-10 pt-16 text-center sm:px-6 sm:pt-24">
           <div className="label-mono">[ 00 / 05 ] &nbsp;·&nbsp; LEARN MONEY. EARN MONEY. MOVE MONEY.</div>
           <h1 className="mx-auto mt-8 max-w-[980px] text-[46px] font-semibold leading-[1] tracking-[-0.045em] sm:text-[84px]">
@@ -35,7 +41,7 @@ export default function Landing() {
           </h1>
           <p className="mx-auto mt-8 max-w-[760px] text-[19px] leading-relaxed text-body sm:text-[22px]">List in naira. Get paid from Accra. The customer never sees a wallet.</p>
           <div className="mt-10 flex flex-col items-center gap-4">
-            <Button href="/signup" size="lg">Create your Banana account <span>→</span></Button>
+            <Button href="/signup" size="lg">Create your Banana account <span className="btn-arrow">→</span></Button>
             <Link href="/home" className="text-[14.5px] text-lilac underline decoration-white/20 underline-offset-4 hover:text-white">or look around the demo first</Link>
           </div>
         </section>
@@ -64,16 +70,16 @@ export default function Landing() {
           <div className="flex items-baseline justify-between">
             <div>
               <div className="text-[13px] font-medium text-[#7A6BAE]">Net cash flow · this month</div>
-              <div className="mt-1 text-[34px] font-bold tracking-tight">{money(MONTH.income - MONTH.expenses, 'NGN', { sign: true })}</div>
+              <div className="mt-1 text-[34px] font-bold tracking-tight">{net > 0 ? <CountUp value={net} prefix="+₦" /> : money(net, 'NGN', { sign: true })}</div>
             </div>
             <span className="rounded-full bg-gold/25 px-3 py-1 text-[12.5px] font-semibold text-[#8A6A12]">Money in ↑</span>
           </div>
           <div className="mt-5 flex h-28 items-end gap-2.5">
-            {WEEK.map((w) => (
+            {WEEK.map((w, i) => (
               <div key={w.d} className="flex flex-1 flex-col items-center gap-1.5">
                 <div className="flex h-24 w-full items-end gap-[3px]">
-                  <div className="flex-1 rounded-t-md bg-gold" style={{ height: `${Math.max(4, (w.in / max) * 100)}%` }} />
-                  <div className="flex-1 rounded-t-md bg-rose-soft" style={{ height: `${Math.max(4, (w.out / max) * 100)}%` }} />
+                  <div className="bar-grow flex-1 rounded-t-md bg-gold" style={{ ...stagger(i), height: `${Math.max(4, (w.in / max) * 100)}%` }} />
+                  <div className="bar-grow flex-1 rounded-t-md bg-rose-soft" style={{ ...stagger(i + 0.5), height: `${Math.max(4, (w.out / max) * 100)}%` }} />
                 </div>
                 <span className="text-[11px] text-[#8A7BBF]">{w.d}</span>
               </div>
@@ -91,7 +97,7 @@ export default function Landing() {
       <Section n={2} id="learn" label="LEARN MONEY" title="One idea per screen. No jargon." copy="Short lessons in plain English — inflation, scams, stablecoins. When you are ready, a Digital Wallet is one tap away. Never a leap." cta={{ href: '/learn', label: 'Start learning' }} flip>
         <div className="grid gap-3">
           {LESSONS.slice(0, 4).map((l, i) => (
-            <div key={l.slug} className={i === 3 ? 'card' : 'card-lilac'}>
+            <div key={l.slug} className={`${i === 3 ? 'card' : 'card-lilac'} reveal-item`} style={stagger(i + 2)}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#8A7BBF]">{['Freshman', 'Freshman', 'Sophomore', 'Sophomore'][i]} · {l.minutes} min</div>
@@ -108,7 +114,7 @@ export default function Landing() {
       <Section n={3} id="earn" label="EARN" title="Get paid for what you can already do." copy="Bounties, freelance work, grants and hackathons — from communities across Africa. Browse without an account. Get paid in USDC." cta={{ href: '/earn', label: 'Browse opportunities' }}>
         <div className="grid gap-3">
           {OPPORTUNITIES.slice(0, 3).map((o, i) => (
-            <div key={o.id} className={i === 1 ? 'card' : 'card-lilac'}>
+            <div key={o.id} className={`${i === 1 ? 'card' : 'card-lilac'} reveal-item`} style={stagger(i + 2)}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#8A7BBF]">{o.type} · {o.difficulty}</div>
@@ -136,23 +142,45 @@ export default function Landing() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {PRODUCTS.filter((p) => p.handle === 'rhydar').map((p, i) => (
-            <div key={p.id} className={i % 3 === 0 ? 'card' : 'card-lilac'}>
-              <ProductArt kind={p.art} className="h-24 rounded-xl" />
-              <div className="mt-3 text-[15.5px] font-semibold leading-snug">{p.title}</div>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-[18px] font-bold">{money(p.price.amount, p.price.currency)}</span>
-                <span className="rounded-full bg-violet px-3 py-1 text-[12.5px] font-semibold text-white">Buy</span>
-              </div>
+            <div key={p.id} className="reveal-item" style={stagger(i + 2)}>
+              <Link href={`/store/${p.handle}/${p.id}`} className={`${i % 3 === 0 ? 'card' : 'card-lilac'} product-card block h-full`}>
+                <ProductArt kind={p.art} className="product-art h-24 rounded-xl" />
+                <div className="mt-3 text-[15.5px] font-semibold leading-snug">{p.title}</div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[18px] font-bold">{money(p.price.amount, p.price.currency)}</span>
+                  <span className="buy-pill rounded-full bg-violet px-3 py-1 text-[12.5px] font-semibold text-white">Buy <span className="buy-arrow">→</span></span>
+                </div>
+              </Link>
             </div>
           ))}
         </div>
       </Section>
 
+      {/* --------------------- MARKET · ACROSS AFRICA --------------------- */}
+      <section id="across-africa" className="relative mx-auto max-w-[1180px] px-4 py-14 sm:px-6 sm:py-20">
+        <Reveal>
+          <div className="reveal-item max-w-2xl">
+            <div className="label-mono">MARKET 🍌 &nbsp;·&nbsp; ACROSS AFRICA</div>
+            <h2 className="mt-4 text-[38px] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[50px]">Buyers pay locally. Creators get paid <Accent>quietly.</Accent></h2>
+            <p className="mt-5 max-w-xl text-[18px] leading-relaxed text-body">A buyer in Accra pays with mobile money or card. A creator in Lagos is settled in stablecoin, in their Digital Wallet. Nobody has to see a wallet to buy.</p>
+          </div>
+          <div className="mt-10 grid gap-4 lg:grid-cols-[1.15fr_1fr]">
+            <div className="well reveal-item" style={stagger(1)}><MarketPulse /></div>
+            <div className="well reveal-item flex flex-col justify-center" style={stagger(2)}><SaleFlow /></div>
+          </div>
+          <div className="reveal-item mt-12 flex items-end justify-between gap-4" style={stagger(3)}>
+            <div className="label-mono">Browse the market</div>
+            <Link href="/market" className="group text-[14.5px] font-medium text-lilac hover:text-white">All products <span className="btn-arrow">→</span></Link>
+          </div>
+          <div className="mt-4"><CategoryTiles from={4} /></div>
+        </Reveal>
+      </section>
+
       {/* --------------------------- 05 WALLET ---------------------------- */}
       <Section n={5} id="wallet" label="WALLET" title="Your Digital Wallet is ready when you are." copy="Receive creator income, save, send family support and cash out to Opay, MoMo or M-Pesa. The technical details wait in Activity — if you ever want them." cta={{ href: '/wallet', label: 'See the wallet' }}>
         <div className="card">
           <div className="text-[13px] font-medium text-[#7A6BAE]">Your Digital Wallet</div>
-          <div className="mt-1 text-[38px] font-bold tracking-tight">₦81,400</div>
+          <div className="mt-1 text-[38px] font-bold tracking-tight"><CountUp value={81400} prefix="₦" /></div>
           <div className="text-[14px] text-[#7A6BAE]">≈ 49.94 USDC</div>
           <div className="mt-5 grid grid-cols-3 gap-2">
             {['Receive', 'Send', 'Cash out'].map((a) => (
@@ -168,8 +196,10 @@ export default function Landing() {
 
       {/* ------------------------------ CTA ------------------------------- */}
       <section className="relative mx-auto max-w-[1180px] px-4 pt-16 text-center sm:px-6">
-        <h2 className="text-[38px] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[60px]">Start with a lesson. End with a <Accent>wallet.</Accent></h2>
-        <div className="mt-9"><Button href="/signup" size="lg">Create your Banana account →</Button></div>
+        <Reveal>
+          <h2 className="reveal-item text-[38px] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[60px]">Start with a lesson. End with a <Accent>wallet.</Accent></h2>
+          <div className="reveal-item mt-9" style={stagger(1)}><Button href="/signup" size="lg">Create your Banana account <span className="btn-arrow">→</span></Button></div>
+        </Reveal>
       </section>
     </>
   );
