@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Avatar, Flag, ProductArt } from './brand';
 import { Button } from './ui';
 import { Checkout } from './Checkout';
+import { PayLinkShare } from './PayLinkShare';
 import { PRODUCTS, country, store as findStore, type Product } from '@/lib/mock-data';
 import { money } from '@/lib/format';
 import { useBanana } from '@/lib/state';
@@ -99,6 +100,7 @@ export function ProductView({ handle, productId }: { handle: string; productId: 
             {p.includes.map((i) => <li key={i} className="flex gap-2.5"><span className="text-gold">✓</span>{i}</li>)}
             <li className="flex gap-2.5 text-body"><span className="text-gold">✓</span>Instant delivery · {p.file.size}</li>
           </ul>
+          <PayLinkShare product={p} className="mt-7 max-w-lg" />
         </div>
         <div className="well lg:sticky lg:top-24"><Checkout product={p} /></div>
       </div>

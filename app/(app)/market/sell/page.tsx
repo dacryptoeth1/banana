@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Button, Field, PageHead } from '@/components/ui';
 import { ProductArt } from '@/components/brand';
-import { ShareRow } from '@/components/StoreViews';
+import { ShareRow, useStoreProducts } from '@/components/StoreViews';
+import { PayLinkShare } from '@/components/PayLinkShare';
 import { COUNTRIES, country, type ArtKind } from '@/lib/mock-data';
 import { RATES, ago, cn, convert, money } from '@/lib/format';
 import { addProduct, setPayout, useBanana, type Payout } from '@/lib/state';
@@ -22,6 +23,7 @@ export default function SellerDashboard() {
   const gross = mine.reduce((a, x) => a + x.grossUsd, 0);
   const net = mine.reduce((a, x) => a + x.netUsd, 0);
   const myProducts = s.products;
+  const linkable = useStoreProducts(s.user.handle);
   const link = `banana.africa/@${s.user.handle}`;
   const [copied, setCopied] = useState(false);
 
@@ -128,6 +130,25 @@ export default function SellerDashboard() {
               </div>
               <div className="mt-4 rounded-xl bg-[#3D1F8C] p-3"><ShareRow handle={s.user.handle} name={`${s.user.name}’s Store`} /></div>
             </div>
+
+          {linkable.length > 0 && (
+            <div className="well">
+              <div className="mb-1 px-2 pt-1 text-[15px] font-semibold">Pay links</div>
+              <p className="mb-3 px-2 text-[13.5px] text-body">Send a product straight to checkout. Buyers pay in their own currency.</p>
+              <div className="space-y-2.5">
+                {linkable.map((p) => (
+                  <div key={p.id} className="rounded-[20px] bg-[#3D1F8C] p-3.5">
+                    <div className="flex items-center gap-3">
+                      <ProductArt kind={p.art} className="h-10 w-10 shrink-0 rounded-lg" />
+                      <div className="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{p.title}</div>
+                      <div className="shrink-0 text-[14px] font-bold">{money(p.price.amount, p.price.currency)}</div>
+                    </div>
+                    <PayLinkShare product={p} compact className="mt-2" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           </div>
 
           <div className="well">
