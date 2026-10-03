@@ -14,9 +14,9 @@ const config: Config = {
         rose: { soft: '#E9A0B4', muted: '#D9788F' },
       },
       fontFamily: {
-        sans: ['"Inter Tight"', 'system-ui', 'sans-serif'],
-        serif: ['"Instrument Serif"', 'Georgia', 'serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        sans: ['var(--font-sans)', '"Inter Tight"', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', '"Instrument Serif"', 'Georgia', 'serif'],
+        mono: ['var(--font-mono)', '"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
         card: '0 22px 40px -24px rgba(20,4,70,.55)',

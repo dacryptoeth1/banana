@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { Inter_Tight, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import { Providers } from '@/components/Providers';
+
+// Self-hosted at build time: no render-blocking request to Google on first paint.
+const sans = Inter_Tight({ subsets: ['latin', 'latin-ext'], weight: ['400', '500', '600', '700'], variable: '--font-sans', display: 'swap' });
+const serif = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--font-serif', display: 'swap' });
+const mono = JetBrains_Mono({ subsets: ['latin', 'latin-ext'], weight: ['400', '500'], variable: '--font-mono', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Banana — Learn money. Earn money. Move money.',
@@ -10,15 +16,7 @@ export const viewport: Viewport = { themeColor: '#3D1F8C' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body className="font-sans"><Providers>{children}</Providers></body>
     </html>
   );
