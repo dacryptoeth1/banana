@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 const fail = (error: string, status: number) => NextResponse.json({ ok: false, error }, { status });
 
-/** POST { email, amount (kobo, NGN), metadata: { productId, handle, buyerCountry?, method? } } → { authorization_url, reference } */
+/** POST { email, amount (kobo, NGN), returnTo?: 'store' | 'pay', metadata: { productId, handle, buyerCountry?, method? } } → { authorization_url, reference } */
 export async function POST(req: Request) {
   if (!isLive) return fail('Not found', 404);
   const body = await req.json().catch(() => null);
@@ -35,7 +35,8 @@ export async function POST(req: Request) {
         amount: toKobo(product),
         currency: 'NGN',
         reference,
-        callback_url: `${new URL(req.url).origin}/store/${product.handle}/${product.id}`,
+        // Back to where the buyer started: the store product page or the shareable pay link. Path built from the product, never from the body.
+        callback_url: `${new URL(req.url).origin}/${body?.returnTo === 'pay' ? 'pay' : 'store'}/${product.handle}/${product.id}`,
         metadata: { productId: product.id, handle: product.handle, buyerCountry, method },
       },
     });
