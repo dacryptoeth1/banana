@@ -8,14 +8,14 @@ export const isEscrowed = (p: Pick<Product, 'category'>) => p.category === 'Serv
 export const ESCROW_STEPS = ['Payment held safely', 'Delivered', 'Paid to creator'] as const;
 
 export type EscrowAction = 'hold' | 'release' | 'refund';
-export type EscrowResult = { ok: true; mode: 'mock' | 'testnet'; tx: ChainInfo } | { ok: false; error: string };
+export type EscrowResult = { ok: true; mode: 'mock' | 'testnet'; tx: ChainInfo } | { ok: false; error: string; refundableAt?: number };
 
 /** Ask the server to hold / release / refund. Never throws: the UI shows a calm retry instead. */
 export async function escrowCall(action: EscrowAction, body: { saleId: string; heldAt: number; seller: string; amountUsd: number }): Promise<EscrowResult> {
   try {
     const res = await fetch('/api/escrow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...body }) });
     const j = await res.json().catch(() => null);
-    if (!res.ok || !j?.ok) return { ok: false, error: j?.error ?? 'That didn’t go through. Please try again.' };
+    if (!res.ok || !j?.ok) return { ok: false, error: j?.error ?? 'That didn’t go through. Please try again.', refundableAt: typeof j?.refundableAt === 'number' ? j.refundableAt : undefined };
     return j as EscrowResult;
   } catch {
     return { ok: false, error: 'You seem to be offline. Please try again.' };

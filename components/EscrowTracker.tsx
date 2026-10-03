@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { m } from 'framer-motion';
 import { Button } from './ui';
 import { ESCROW_STEPS, escrowCall } from '@/lib/escrow';
@@ -8,6 +8,7 @@ import { isLive } from '@/lib/mode';
 import { spring } from '@/lib/motion';
 import { escrowDelivered, escrowHeld, escrowRefunded, escrowReleaseFailed, escrowReleased, useBanana, type Sale } from '@/lib/state';
 
+const fmtLeft = (ms: number) => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 const body = (x: Sale) => ({ saleId: x.id, heldAt: x.escrow!.heldAt, seller: x.handle, amountUsd: x.netUsd });
 
 /** Hold the payment (deposit). Called once, right after a Creator Service is paid for. Safe to call again on failure. */
@@ -26,6 +27,20 @@ export function EscrowTracker({ saleId, compact }: { saleId: string; compact?: b
   const sale = s.sales.find((x) => x.id === saleId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [opensAt, setOpensAt] = useState<number | null>(null); // testnet: when the onchain refund window opens
+  const [now, setNow] = useState(() => Date.now());
+
+  // Testnet only: the contract enforces the refund timeout, so count down and refund the moment it opens.
+  useEffect(() => {
+    if (!opensAt) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [opensAt]);
+  useEffect(() => {
+    if (opensAt && now >= opensAt + 1500 && !busy) { setOpensAt(null); void skipAhead(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [now, opensAt]);
+
   if (!sale?.escrow) return null;
   const e = sale.escrow;
 
@@ -52,7 +67,9 @@ export function EscrowTracker({ saleId, compact }: { saleId: string; compact?: b
     if (!sale) return;
     setBusy(true); setError('');
     const r = await escrowCall('refund', body(sale));
-    if (r.ok) escrowRefunded(sale.id, r.tx); else setError(r.error);
+    if (r.ok) escrowRefunded(sale.id, r.tx);
+    else if (r.refundableAt) { setOpensAt(r.refundableAt); setNow(Date.now()); } // testnet: wait for the window
+    else setError(r.error);
     setBusy(false);
   }
 
@@ -106,7 +123,11 @@ export function EscrowTracker({ saleId, compact }: { saleId: string; compact?: b
               <Button full size={compact ? 'md' : 'lg'} disabled={busy} onClick={confirm}>{busy ? 'Confirming…' : 'Confirm delivery'}</Button>
               <p className="mt-2 text-center text-[12px] text-[#7A6BAE]">Not delivered within 7 days? You’re refunded automatically.</p>
               {!isLive && (
-                <button onClick={skipAhead} disabled={busy} className="mx-auto mt-1 block text-[11.5px] text-[#9C8FCB] underline underline-offset-2 hover:text-[#5A4A93]">Demo: skip ahead 7 days (no delivery)</button>
+                opensAt ? (
+                  <p className="mt-1 text-center text-[11.5px] text-[#9C8FCB]">Refund opens onchain in {fmtLeft(opensAt - now)} (10-minute test window). It runs automatically.</p>
+                ) : (
+                  <button onClick={skipAhead} disabled={busy} className="mx-auto mt-1 block text-[11.5px] text-[#9C8FCB] underline underline-offset-2 hover:text-[#5A4A93]">Demo: skip ahead 7 days (no delivery)</button>
+                )
               )}
             </div>
           )}
