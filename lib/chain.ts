@@ -15,7 +15,8 @@ export type ChainInfo = {
 };
 
 export const NETWORK = 'Monad testnet';
-export const EXPLORER = (process.env.NEXT_PUBLIC_MONAD_EXPLORER ?? 'https://testnet.monadexplorer.com').replace(/\/$/, '');
+// MonadScan (Etherscan-style: /tx/<hash>). Backup: https://testnet.monadvision.com
+export const EXPLORER = (process.env.NEXT_PUBLIC_MONAD_EXPLORER || 'https://testnet.monadscan.com').replace(/\/$/, '');
 export const explorerTx = (hash: string) => `${EXPLORER}/tx/${hash}`;
 
 /** The city we name on receipts, per buyer country. */

@@ -110,8 +110,13 @@ function OnchainFace({ chain, settled, onBack }: { chain: ChainInfo; settled: st
         <div className="flex justify-between gap-3"><span className="text-lilac-3">Network fee</span><span className="text-white">Covered by Banana</span></div>
       </div>
       <div className="mt-3.5 flex items-center justify-between gap-3 font-sans">
-        <a href={explorerTx(chain.hash)} target="_blank" rel="noreferrer" className="text-[13px] font-semibold text-gold underline decoration-gold/40 underline-offset-2">View on Monad explorer ↗</a>
-        <button onClick={onBack} className="text-[12.5px] font-semibold text-lilac hover:text-white">↺ Plain view</button>
+        {chain.sample ? (
+          // Sample hashes don't exist onchain, so never link them: an explorer "not found" on stage is worse than no link.
+          <span aria-disabled className="text-[11.5px] leading-snug text-lilac-3/80">Sample receipt · goes live with testnet settlement</span>
+        ) : (
+          <a href={explorerTx(chain.hash)} target="_blank" rel="noreferrer" className="text-[13px] font-semibold text-gold underline decoration-gold/40 underline-offset-2">View on MonadScan ↗</a>
+        )}
+        <button onClick={onBack} className="shrink-0 text-[12.5px] font-semibold text-lilac hover:text-white">↺ Plain view</button>
       </div>
     </div>
   );
