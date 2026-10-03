@@ -4,9 +4,12 @@ import { useState } from 'react';
 import { AnimatePresence, m } from 'framer-motion';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
 import { spring } from '@/lib/motion';
+import { FlipReceipt } from '@/components/FlipReceipt';
+import { SaleReceipt } from '@/components/SaleReceipt';
+import { sampleChain } from '@/lib/chain';
 import { Button, Field, PageHead, Sheet } from '@/components/ui';
 import { country } from '@/lib/mock-data';
-import { RATES, SYMBOL, ago, cn, convert, money, shortHash, type Currency } from '@/lib/format';
+import { RATES, SYMBOL, ago, cn, convert, money, type Currency } from '@/lib/format';
 import { SMALL_SEND_LIMIT_USD, balanceUsd, cashOut, receiveDemo, revealWallet, scamLessonDone, sendMoney, useBanana, type Activity } from '@/lib/state';
 
 type Modal = null | 'receive' | 'send' | 'cashout';
@@ -209,25 +212,23 @@ function CashOut({ onClose }: { onClose: () => void }) {
 
 /* --------------------------------- Receipt -------------------------------- */
 function ReceiptView({ a, cur }: { a: Activity; cur: Currency }) {
-  const [tech, setTech] = useState(false);
+  const s = useBanana();
+  const sale = a.kind === 'sale' ? s.sales.find((x) => x.ref === a.ref) : undefined;
   return (
     <div>
       <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#8A7BBF]">Receipt</div>
       <h2 className="mt-2 pr-10 text-[24px] font-semibold leading-tight tracking-[-0.03em]">{a.title}</h2>
-      <div className={cn('mt-4 text-[36px] font-bold tracking-tight', a.usd >= 0 ? 'text-[#8A6A12]' : 'text-rose-muted')}>{money(convert(a.usd, 'USD', cur), cur, { sign: true })}</div>
-      <div className="text-[14px] text-[#7A6BAE]">{money(Math.abs(a.usd), 'USD', { decimals: 2 })} · {a.asset}</div>
-      <div className="mt-5 space-y-2 rounded-2xl bg-lilac-2 p-4 text-[14.5px]">
-        <div className="flex justify-between"><span>Status</span><b>Complete ✓</b></div>
-        <div className="flex justify-between"><span>When</span><b>{new Date(a.at).toLocaleString()}</b></div>
-        <div className="flex justify-between gap-4"><span>Details</span><b className="text-right">{a.sub}</b></div>
-      </div>
-      <button onClick={() => setTech((t) => !t)} className="mt-4 text-[13.5px] font-semibold text-violet">{tech ? 'Hide' : 'Show'} technical details</button>
-      {tech && (
-        <div className="pop mt-2 space-y-1.5 rounded-xl border border-[#E5DCFA] p-3.5 text-[13px]">
-          <div className="flex justify-between gap-3"><span>Transaction hash</span><b className="font-mono">{shortHash(a.ref)}</b></div>
-          <div className="flex justify-between gap-3"><span>Network fee</span><b>Covered by Banana</b></div>
-          <a href="#" onClick={(e) => e.preventDefault()} className="block pt-1 font-semibold text-violet underline underline-offset-2">View on explorer ↗</a>
-        </div>
+      <div className={cn('mt-3 text-[36px] font-bold tracking-tight', a.usd >= 0 ? 'text-[#8A6A12]' : 'text-rose-muted')}>{money(convert(a.usd, 'USD', cur), cur, { sign: true })}</div>
+      <div className="mb-5 text-[14px] text-[#7A6BAE]">{money(Math.abs(a.usd), 'USD', { decimals: 2 })} · {a.asset} · Complete ✓</div>
+      {sale ? (
+        <SaleReceipt sale={sale} />
+      ) : (
+        <FlipReceipt
+          amount={money(Math.abs(a.usd), 'USD', { decimals: 2 })}
+          rows={[['When', new Date(a.at).toLocaleString()], ['Details', a.sub]]}
+          chain={a.chain ?? sampleChain(a.ref, a.at)}
+          settled={`${Math.abs(a.usd).toFixed(2)} USDC`}
+        />
       )}
     </div>
   );

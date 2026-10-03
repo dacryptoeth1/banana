@@ -2,18 +2,21 @@
 import { useSyncExternalStore } from 'react';
 import { RATES, fakeHash, type Currency } from './format';
 import { country, type CountryCode, type Product } from './mock-data';
+import type { ChainInfo } from './chain';
 
 /* Everything the demo remembers lives in localStorage. No backend. */
 
 export type User = { name: string; email: string; country: CountryCode; currency: Currency; handle: string };
 export type ActivityKind = 'sale' | 'bounty' | 'send' | 'cashout' | 'receive';
-export type Activity = { id: string; kind: ActivityKind; title: string; sub: string; usd: number; at: number; ref: string; asset: string };
+export type Activity = { id: string; kind: ActivityKind; title: string; sub: string; usd: number; at: number; ref: string; asset: string; chain?: ChainInfo };
 export type Sale = {
   id: string; productId: string; title: string; handle: string;
   grossUsd: number; netUsd: number; buyerEmail: string; buyerCountry: CountryCode; method: string;
   payout: Payout; at: number; ref: string;
   /** Live mode only: the Paystack reference this sale was recorded for. */
   paystackRef?: string;
+  /** Real settlement details (testnet mode). Absent in demo mode, where receipts show sample details. */
+  chain?: ChainInfo;
 };
 export type Payout = 'usdc' | 'local' | 'banana';
 export type BountyStatus = 'started' | 'submitted' | 'paid';

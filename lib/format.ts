@@ -35,6 +35,5 @@ export function fakeHash() {
   return `0x${h}`;
 }
 
-export const shortHash = (h: string) => `${h.slice(0, 8)}…${h.slice(-6)}`;
 
 export const cn = (...a: (string | false | null | undefined)[]) => a.filter(Boolean).join(' ');

@@ -1,13 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Button, Field, PageHead } from '@/components/ui';
+import { Button, Field, PageHead, Sheet } from '@/components/ui';
+import { SaleReceipt } from '@/components/SaleReceipt';
 import { ProductArt } from '@/components/brand';
 import { ShareRow, useStoreProducts } from '@/components/StoreViews';
 import { PayLinkShare } from '@/components/PayLinkShare';
 import { COUNTRIES, country, type ArtKind } from '@/lib/mock-data';
 import { RATES, ago, cn, convert, money } from '@/lib/format';
-import { addProduct, setPayout, useBanana, type Payout } from '@/lib/state';
+import { addProduct, setPayout, useBanana, type Payout, type Sale } from '@/lib/state';
 
 const PAYOUTS: { id: Payout; label: string; sub: string }[] = [
   { id: 'usdc', label: 'USDC', sub: 'Keep it as digital dollars' },
@@ -26,6 +27,7 @@ export default function SellerDashboard() {
   const linkable = useStoreProducts(s.user.handle);
   const link = `banana.africa/@${s.user.handle}`;
   const [copied, setCopied] = useState(false);
+  const [receipt, setReceipt] = useState<Sale | null>(null);
 
   const [title, setTitle] = useState('');
   const [blurb, setBlurb] = useState('');
@@ -88,7 +90,7 @@ export default function SellerDashboard() {
                       </div>
                       <div className="text-right"><div className="text-[17px] font-bold text-[#8A6A12]">+{money(x.netUsd, 'USD', { decimals: 2 })}</div><div className="text-[12px] text-[#7A6BAE]">{x.payout === 'usdc' ? 'settled in USDC' : x.payout === 'local' ? 'paid out locally' : 'to Banana balance'}</div></div>
                     </div>
-                    <div className="mt-2.5 flex items-center justify-between rounded-lg bg-lilac-2 px-3 py-2 text-[12.5px] text-[#5A4A93]"><span>✓ Settled · receipt saved</span><Link href="/wallet" className="font-semibold text-violet">See in wallet →</Link></div>
+                    <div className="mt-2.5 flex items-center justify-between rounded-lg bg-lilac-2 px-3 py-2 text-[12.5px] text-[#5A4A93]"><span>✓ Settled</span><span className="flex gap-3"><button onClick={() => setReceipt(x)} className="font-semibold text-violet">Receipt</button><Link href="/wallet" className="font-semibold text-violet">See in wallet →</Link></span></div>
                   </div>
                 ))}
               </div>
@@ -168,6 +170,13 @@ export default function SellerDashboard() {
           </div>
         </div>
       </div>
+      <Sheet open={!!receipt} onClose={() => setReceipt(null)}>
+        {receipt && (<>
+          <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#8A7BBF]">Sale</div>
+          <h2 className="mb-5 mt-2 pr-10 text-[24px] font-semibold leading-tight tracking-[-0.03em]">{receipt.title}</h2>
+          <SaleReceipt sale={receipt} />
+        </>)}
+      </Sheet>
     </div>
   );
 }

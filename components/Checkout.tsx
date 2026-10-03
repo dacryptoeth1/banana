@@ -6,8 +6,9 @@ import { m } from 'framer-motion';
 import { Button, Field } from './ui';
 import { Flag } from './brand';
 import { SuccessBurst } from './SuccessBurst';
+import { SaleReceipt } from './SaleReceipt';
 import { COUNTRIES, country, type CountryCode, type Product } from '@/lib/mock-data';
-import { convert, money, shortHash, cn } from '@/lib/format';
+import { convert, money, cn } from '@/lib/format';
 import { recordSale, switchRole, useBanana, type Sale } from '@/lib/state';
 import { isLive } from '@/lib/mode';
 import { toKobo } from '@/lib/pay';
@@ -96,7 +97,6 @@ export function useCheckout(product: Product, returnTo: 'store' | 'pay' = 'store
 export function CheckoutSuccess({ product, sale }: { product: Product; sale: Sale }) {
   const router = useRouter();
   const me = useBanana();
-  const [details, setDetails] = useState(false);
   const { amount, currency } = product.price;
 
   function download() {
@@ -133,20 +133,7 @@ export function CheckoutSuccess({ product, sale }: { product: Product; sale: Sal
           )}
         </div>
 
-        <div className="mt-5 rounded-2xl border border-[#EDE6FF] p-4 text-left text-[14px] text-[#4C3E82]">
-          <div className="flex justify-between"><span>Order</span><b>{sale.id}</b></div>
-          <div className="mt-1.5 flex justify-between"><span>Paid</span><b>{money(amount, currency)} · {sale.method}</b></div>
-          <div className="mt-1.5 flex justify-between"><span>Seller</span><b>@{product.handle}</b></div>
-          <button onClick={() => setDetails((d) => !d)} className="mt-3 text-[13px] font-semibold text-violet">{details ? 'Hide' : 'Show'} receipt {details ? '↑' : '↓'}</button>
-          {details && (
-            <div className="pop mt-3 space-y-1.5 rounded-xl bg-lilac-2 p-3.5 text-[13px]">
-              <div className="flex justify-between"><span>Seller received</span><b>{money(sale.netUsd, 'USD', { decimals: 2 })} in USDC</b></div>
-              <div className="flex justify-between"><span>Banana fee (2%)</span><b>{money(sale.grossUsd - sale.netUsd, 'USD', { decimals: 2 })}</b></div>
-              <div className="flex justify-between"><span>Reference</span><b className="font-mono">{shortHash(sale.ref)}</b></div>
-              <a href="#" onClick={(e) => e.preventDefault()} className="block pt-1 text-[12px] text-[#7A6BAE] underline underline-offset-2">Explorer ↗</a>
-            </div>
-          )}
-        </div>
+        <div className="mt-5"><SaleReceipt sale={sale} amount={money(amount, currency)} /></div>
         <div className="mt-5 flex justify-center gap-4 text-[14px]">
           <Link href={`/store/${product.handle}`} className="font-semibold text-violet">Back to store</Link>
           <Link href="/wallet" className="font-semibold text-violet">Open wallet</Link>
