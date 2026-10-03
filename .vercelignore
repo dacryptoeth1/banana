@@ -1,0 +1,10 @@
+# Never upload local secrets to Vercel (relayer key, Paystack/Resend keys live here).
+.env
+.env*.local
+.env.*.local
+# Local-only build output and tooling
+.next
+node_modules
+contracts/out
+contracts/cache
+contracts/broadcast
