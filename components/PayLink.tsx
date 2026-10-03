@@ -36,7 +36,7 @@ function PayLinkCheckout({ product: p, storeName, hue }: { product: Product; sto
   const [tapped, setTapped] = useState<Method | null>(null);
   const [copied, setCopied] = useState(false);
   const [link, setLink] = useState(payPath(p.handle, p.id));
-  const { stage, sale, note, error, pay } = useCheckout(p, 'pay');
+  const { stage, sale, note, error, pay, escrowed } = useCheckout(p, 'pay');
 
   useEffect(() => {
     setFrom(guessCountry('GH'));
@@ -106,7 +106,7 @@ function PayLinkCheckout({ product: p, storeName, hue }: { product: Product; sto
           </div>
           {error && <div role="alert" className="mt-3 text-center text-[13.5px] font-medium text-[#B0456A]">{error}</div>}
           {!valid && email.length > 0 && <div className="mt-2 text-center text-[12.5px] text-[#B0456A]">Enter a valid email so we can send your receipt.</div>}
-          <p className="mt-3 text-center text-[12.5px] text-[#7A6BAE]">🔒 Unlocks instantly · no account or wallet needed</p>
+          <p className="mt-3 text-center text-[12.5px] text-[#7A6BAE]">🔒 {escrowed ? 'Held safely until you confirm delivery' : 'Unlocks instantly'} · no account or wallet needed</p>
         </div>
       </div>
 

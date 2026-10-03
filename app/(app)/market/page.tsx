@@ -7,12 +7,15 @@ import { CATEGORIES_MARKET, PRODUCTS, STORES, store } from '@/lib/mock-data';
 import { money } from '@/lib/format';
 import { useBanana } from '@/lib/state';
 import { SaleToasts } from '@/components/LazyMotionIslands';
+import { EscrowTracker } from '@/components/EscrowTracker';
 
 export default function MarketHome() {
   const s = useBanana();
   const [cat, setCat] = useState('All');
   const [q, setQ] = useState('');
   const all = [...s.products, ...PRODUCTS];
+  // Creator Services this person paid for and still has to confirm.
+  const open = s.sales.filter((x) => (x.escrow?.status === 'held' || x.escrow?.status === 'delivered') && (x.handle !== s.user.handle || x.buyerEmail === s.user.email));
   const list = all.filter((p) => (cat === 'All' || p.category === cat) && (q === '' || p.title.toLowerCase().includes(q.toLowerCase())));
 
   return (
@@ -24,6 +27,20 @@ export default function MarketHome() {
         sub="Templates, playbooks, designs, tickets and services — from Lagos to Nairobi. Pay with card or mobile money."
         right={<Button href="/market/sell" variant="light">Sell on Banana →</Button>}
       />
+
+      {open.length > 0 && (
+        <div className="well mb-6">
+          <div className="mb-3 px-2 pt-1 text-[15px] font-semibold">Your orders in progress</div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {open.map((x) => (
+              <div key={x.id} className="rounded-[20px] bg-white p-3 text-ink">
+                <div className="mb-2 flex items-baseline justify-between gap-3 px-1"><span className="truncate text-[15px] font-semibold">{x.title}</span><span className="shrink-0 font-mono text-[12px] text-[#8A7BBF]">@{x.handle}</span></div>
+                <EscrowTracker saleId={x.id} compact />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products…" className="input !h-11 sm:max-w-xs" />

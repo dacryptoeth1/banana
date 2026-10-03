@@ -15,8 +15,10 @@ export type Sale = {
   payout: Payout; at: number; ref: string;
   /** Live mode only: the Paystack reference this sale was recorded for. */
   paystackRef?: string;
-  /** Real settlement details (testnet mode). Absent in demo mode, where receipts show sample details. */
+  /** Settlement details: real in testnet mode, flagged `sample` in mock/demo. Absent: receipts derive a sample. */
   chain?: ChainInfo;
+  /** Creator Services only: payment held until the buyer confirms delivery. */
+  escrow?: Escrow;
 };
 export type Payout = 'usdc' | 'local' | 'banana';
 export type BountyStatus = 'started' | 'submitted' | 'paid';
@@ -184,8 +186,37 @@ export function payBounty(id: string, title: string, org: string, usdc: number) 
   }));
 }
 
-/** A buyer paid in local money → the store owner is settled in stablecoin. Works from either persona. Returns the sale. */
-export function recordSale(input: { product: Product; grossUsd: number; buyerEmail: string; buyerCountry: CountryCode; method: string; sellerHandle: string; paystackRef?: string }): Sale {
+/**
+ * Settle a sale to its store owner (whichever persona owns the store): stablecoin, local payout or
+ * Banana balance per their payout choice, plus a plain-language Activity row. No owner here: no-op.
+ */
+function creditOwner(s: State, sale: Sale): State {
+  const other: Role = s.role === 'seller' ? 'buyer' : 'seller';
+  const ownerRole: Role | null = s.user.handle === sale.handle ? s.role : s.stash[other]?.user.handle === sale.handle ? other : null;
+  if (ownerRole === null) return s; // some other store: the buyer just gets a receipt
+  const owner: Slice = ownerRole === s.role ? sliceOf(s) : s.stash[ownerRole]!;
+  const payout = sale.payout;
+  const assetLabel = payout === 'usdc' ? 'USDC' : payout === 'local' ? owner.user.currency : 'Banana balance';
+  const credited: Slice = {
+    ...owner,
+    walletReady: true,
+    walletRevealed: true,
+    usdc: payout === 'usdc' ? owner.usdc + sale.netUsd : owner.usdc,
+    localUsd: payout === 'local' ? owner.localUsd + sale.netUsd : owner.localUsd,
+    banana: payout === 'banana' ? owner.banana + sale.netUsd : owner.banana,
+    activity: [
+      { id: uid(), kind: 'sale' as const, title: `Sale: ${sale.title}`, sub: `From ${country(sale.buyerCountry).name} · ${sale.method} · paid out as ${assetLabel}`, usd: sale.netUsd, at: Date.now(), ref: sale.ref, asset: assetLabel, chain: sale.chain },
+      ...owner.activity,
+    ],
+  };
+  return ownerRole === s.role ? { ...s, ...credited } : { ...s, stash: { ...s.stash, [ownerRole]: credited } };
+}
+
+/**
+ * A buyer paid in local money → the store owner is settled in stablecoin. Works from either persona. Returns the sale.
+ * `escrow: true` (Creator Services): the money is held, and the owner is only credited by releaseEscrow().
+ */
+export function recordSale(input: { product: Product; grossUsd: number; buyerEmail: string; buyerCountry: CountryCode; method: string; sellerHandle: string; paystackRef?: string; escrow?: boolean }): Sale {
   const fee = 0.02;
   const netUsd = +(input.grossUsd * (1 - fee)).toFixed(2);
   let sale!: Sale;
@@ -194,9 +225,8 @@ export function recordSale(input: { product: Product; grossUsd: number; buyerEma
     const seen = input.paystackRef ? s.sales.find((x) => x.paystackRef === input.paystackRef) : undefined;
     if (seen) { sale = seen; return s; }
     const other: Role = s.role === 'seller' ? 'buyer' : 'seller';
-    const ownerRole: Role | null = s.user.handle === input.sellerHandle ? s.role : s.stash[other]?.user.handle === input.sellerHandle ? other : null;
-    const owner: Slice | undefined = ownerRole === null ? undefined : ownerRole === s.role ? sliceOf(s) : s.stash[ownerRole];
-    const payout: Payout = owner?.payout ?? 'usdc';
+    const owner = s.user.handle === input.sellerHandle ? sliceOf(s) : s.stash[other]?.user.handle === input.sellerHandle ? s.stash[other] : undefined;
+    const now = Date.now();
     sale = {
       id: `BNN-${Math.floor(1000 + Math.random() * 9000)}`,
       productId: input.product.id,
@@ -207,30 +237,65 @@ export function recordSale(input: { product: Product; grossUsd: number; buyerEma
       buyerEmail: input.buyerEmail,
       buyerCountry: input.buyerCountry,
       method: input.method,
-      payout,
-      at: Date.now(),
+      payout: owner?.payout ?? 'usdc',
+      at: now,
       ref: fakeHash(),
       paystackRef: input.paystackRef,
+      escrow: input.escrow ? { status: 'held', heldAt: now, refundableAt: now + ESCROW_TIMEOUT_MS } : undefined,
     };
     const withSale = { ...s, sales: [sale, ...s.sales] };
-    if (!owner || ownerRole === null) return withSale; // some other store: the buyer just gets a receipt
-
-    const assetLabel = payout === 'usdc' ? 'USDC' : payout === 'local' ? owner.user.currency : 'Banana balance';
-    const credited: Slice = {
-      ...owner,
-      walletReady: true,
-      walletRevealed: true,
-      usdc: payout === 'usdc' ? owner.usdc + netUsd : owner.usdc,
-      localUsd: payout === 'local' ? owner.localUsd + netUsd : owner.localUsd,
-      banana: payout === 'banana' ? owner.banana + netUsd : owner.banana,
-      activity: [
-        { id: uid(), kind: 'sale' as const, title: `Sale: ${input.product.title}`, sub: `From ${country(input.buyerCountry).name} · ${input.method} · paid out as ${assetLabel}`, usd: netUsd, at: Date.now(), ref: sale.ref, asset: assetLabel },
-        ...owner.activity,
-      ],
-    };
-    return ownerRole === s.role ? { ...withSale, ...credited } : { ...withSale, stash: { ...s.stash, [ownerRole]: credited } };
+    return input.escrow ? withSale : creditOwner(withSale, sale);
   });
   return sale;
+}
+
+/* ------------------------------ escrow ----------------------------------- */
+/** Creator Services: plain-language states only. "held" → "delivered" → "released" (or "refunded" after the timeout). */
+export type EscrowStatus = 'held' | 'delivered' | 'released' | 'refunded';
+export type Escrow = {
+  status: EscrowStatus;
+  heldAt: number;
+  refundableAt: number;
+  deliveredAt?: number;
+  doneAt?: number;
+  hold?: ChainInfo;
+  release?: ChainInfo;
+  refund?: ChainInfo;
+};
+export const ESCROW_TIMEOUT_MS = 7 * 24 * 3600 * 1000;
+
+function patchSale(s: State, id: string, fn: (x: Sale) => Sale) {
+  return { ...s, sales: s.sales.map((x) => (x.id === id ? fn(x) : x)) };
+}
+
+/** The hold landed onchain (or in the mock): keep its receipt. */
+export function escrowHeld(id: string, tx: ChainInfo) {
+  update((s) => patchSale(s, id, (x) => (x.escrow ? { ...x, chain: tx, escrow: { ...x.escrow, hold: tx } } : x)));
+}
+
+/** Buyer tapped "Confirm delivery". The release is on its way. */
+export function escrowDelivered(id: string) {
+  update((s) => patchSale(s, id, (x) => (x.escrow?.status === 'held' ? { ...x, escrow: { ...x.escrow, status: 'delivered', deliveredAt: Date.now() } } : x)));
+}
+
+/** Release confirmed: the creator is paid now, exactly once. */
+export function escrowReleased(id: string, tx: ChainInfo) {
+  update((s) => {
+    const sale = s.sales.find((x) => x.id === id);
+    if (!sale?.escrow || sale.escrow.status === 'released' || sale.escrow.status === 'refunded') return s;
+    const paid: Sale = { ...sale, chain: tx, escrow: { ...sale.escrow, status: 'released', release: tx, doneAt: Date.now() } };
+    return creditOwner(patchSale(s, id, () => paid), paid);
+  });
+}
+
+/** The release didn't go through: back to held so the buyer can try again. */
+export function escrowReleaseFailed(id: string) {
+  update((s) => patchSale(s, id, (x) => (x.escrow?.status === 'delivered' ? { ...x, escrow: { ...x.escrow, status: 'held', deliveredAt: undefined } } : x)));
+}
+
+/** Timed out without delivery: the buyer is refunded to the way they paid. */
+export function escrowRefunded(id: string, tx: ChainInfo) {
+  update((s) => patchSale(s, id, (x) => (x.escrow?.status === 'held' ? { ...x, chain: tx, escrow: { ...x.escrow, status: 'refunded', refund: tx, doneAt: Date.now() } } : x)));
 }
 
 /** Demo switch: look at the same world as the Nigerian seller or the Ghanaian buyer. */

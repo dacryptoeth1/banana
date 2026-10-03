@@ -7,6 +7,8 @@ import { Button, Field } from './ui';
 import { Flag } from './brand';
 import { SuccessBurst } from './SuccessBurst';
 import { SaleReceipt } from './SaleReceipt';
+import { EscrowTracker, holdEscrow } from './EscrowTracker';
+import { isEscrowed } from '@/lib/escrow';
 import { COUNTRIES, country, type CountryCode, type Product } from '@/lib/mock-data';
 import { convert, money, cn } from '@/lib/format';
 import { recordSale, switchRole, useBanana, type Sale } from '@/lib/state';
@@ -29,6 +31,7 @@ export function useCheckout(product: Product, returnTo: 'store' | 'pay' = 'store
   const [note, setNote] = useState('Confirming your payment…');
   const [error, setError] = useState('');
   const usd = convert(product.price.amount, product.price.currency, 'USD');
+  const escrowed = isEscrowed(product); // Creator Services: held until the buyer confirms delivery
 
   /* Live: ask our server for a Paystack checkout page, then send the buyer there. */
   async function payLive(email: string, from: CountryCode, method: Method) {
@@ -62,7 +65,8 @@ export function useCheckout(product: Product, returnTo: 'store' | 'pay' = 'store
         if (cancelled) return;
         if (r?.ok && r.paid) {
           if (r.productId !== product.id || r.handle !== product.handle) break; // a payment for something else
-          const s = recordSale({ product, grossUsd: usd, buyerEmail: r.email ?? me.user.email, buyerCountry: r.buyerCountry ?? 'GH', method: r.method ?? 'Paystack', sellerHandle: product.handle, paystackRef: ref });
+          const s = recordSale({ product, grossUsd: usd, buyerEmail: r.email ?? me.user.email, buyerCountry: r.buyerCountry ?? 'GH', method: r.method ?? 'Paystack', sellerHandle: product.handle, paystackRef: ref, escrow: escrowed });
+          if (escrowed && !s.escrow?.hold) await holdEscrow(s); // a failed hold is retried from the tracker
           window.history.replaceState(null, '', window.location.pathname);
           setSale(s); setStage('done');
           return;
@@ -82,15 +86,16 @@ export function useCheckout(product: Product, returnTo: 'store' | 'pay' = 'store
   function pay(input: { email: string; from: CountryCode; method: Method }) {
     if (isLive) return void payLive(input.email, input.from, input.method);
     setStage('paying'); setNote('Confirming your payment…'); setError('');
-    setTimeout(() => {
+    setTimeout(async () => {
       const rail = input.method === 'MoMo' ? country(input.from).buyerRails[0] : input.method;
-      const s = recordSale({ product, grossUsd: usd, buyerEmail: input.email, buyerCountry: input.from, method: rail, sellerHandle: product.handle });
+      const s = recordSale({ product, grossUsd: usd, buyerEmail: input.email, buyerCountry: input.from, method: rail, sellerHandle: product.handle, escrow: escrowed });
+      if (escrowed) { setNote('Holding your payment safely…'); await holdEscrow(s); }
       setSale(s);
       setStage('done');
-    }, 1700);
+    }, escrowed ? 1100 : 1700);
   }
 
-  return { stage, sale, note, error, pay, usd };
+  return { stage, sale, note, error, pay, usd, escrowed };
 }
 
 /** "Unlocked." Burst, download, the seller's side, and the receipt sliding up. */
@@ -112,11 +117,14 @@ export function CheckoutSuccess({ product, sale }: { product: Product; sale: Sal
     <div className="card !p-6 text-center">
       <SuccessBurst size={76} />
       <m.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }}>
-        <h2 className="mt-5 text-[28px] font-semibold tracking-[-0.03em]">Unlocked.</h2>
-        <p className="text-[17px] text-[#4C3E82]">Receipt saved. We emailed a copy to <b>{sale.buyerEmail}</b>.</p>
+        <h2 className="mt-5 text-[28px] font-semibold tracking-[-0.03em]">{sale.escrow ? 'Payment held safely.' : 'Unlocked.'}</h2>
+        <p className="text-[17px] text-[#4C3E82]">{sale.escrow ? <>@{product.handle} gets paid when you confirm delivery. Receipt sent to <b>{sale.buyerEmail}</b>.</> : <>Receipt saved. We emailed a copy to <b>{sale.buyerEmail}</b>.</>}</p>
       </m.div>
 
       <m.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ ...softSpring, delay: 0.5 }}>
+        {sale.escrow ? (
+          <div className="mt-5"><EscrowTracker saleId={sale.id} /></div>
+        ) : (<>
         <div className="mt-5 flex items-center gap-3 rounded-2xl bg-lilac-2 p-3.5 text-left">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[20px]">📦</span>
           <div className="min-w-0 flex-1">
@@ -125,6 +133,7 @@ export function CheckoutSuccess({ product, sale }: { product: Product; sale: Sal
           </div>
         </div>
         <div className="mt-4"><Button full onClick={download}>Download {product.title} ↓</Button></div>
+        </>)}
         <div className="mt-3">
           {me.role === 'buyer' ? (
             <Button full variant="soft" onClick={() => { switchRole('seller'); router.push('/market/sell'); }}>See the seller’s side →</Button>
@@ -150,7 +159,7 @@ export function Checkout({ product }: { product: Product }) {
   const [phone, setPhone] = useState('');
   const [from, setFrom] = useState<CountryCode>('GH');
   const [method, setMethod] = useState<Method>('Paystack');
-  const { stage, sale, note, error, pay, usd } = useCheckout(product, 'store');
+  const { stage, sale, note, error, pay, usd, escrowed } = useCheckout(product, 'store');
 
   const { amount, currency } = product.price;
   const buyer = country(from);
@@ -200,10 +209,10 @@ export function Checkout({ product }: { product: Product }) {
       </div>
 
       <div className="mt-6"><Button size="lg" full disabled={!valid || stage === 'paying'} onClick={() => pay({ email, from, method })}>
-        {stage === 'paying' ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> {note}</> : <>Pay {money(amount, currency)}</>}
+        {stage === 'paying' ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> {note}</> : <>Pay {money(amount, currency)}{escrowed && ' · held safely'}</>}
       </Button></div>
       {error && <div role="alert" className="mt-3 text-center text-[13.5px] font-medium text-[#B0456A]">{error}</div>}
-      <div className="mt-3 flex items-center justify-center gap-2 text-[13px] text-[#7A6BAE]">🔒 Unlocks instantly after payment</div>
+      <div className="mt-3 flex items-center justify-center gap-2 text-center text-[13px] text-[#7A6BAE]">🔒 {escrowed ? 'Held safely until you confirm delivery' : 'Unlocks instantly after payment'}</div>
       {!valid && email.length > 0 && <div className="mt-2 text-center text-[12.5px] text-[#B0456A]">Enter a valid email so we can send your receipt.</div>}
     </div>
   );

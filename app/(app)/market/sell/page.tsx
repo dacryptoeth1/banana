@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Button, Field, PageHead, Sheet } from '@/components/ui';
 import { SaleReceipt } from '@/components/SaleReceipt';
+import { EscrowTracker } from '@/components/EscrowTracker';
 import { ProductArt } from '@/components/brand';
 import { ShareRow, useStoreProducts } from '@/components/StoreViews';
 import { PayLinkShare } from '@/components/PayLinkShare';
@@ -22,7 +23,9 @@ export default function SellerDashboard() {
   const cur = s.user.currency;
   const mine = s.sales.filter((x) => x.handle === s.user.handle);
   const gross = mine.reduce((a, x) => a + x.grossUsd, 0);
-  const net = mine.reduce((a, x) => a + x.netUsd, 0);
+  const settled = (x: Sale) => !x.escrow || x.escrow.status === 'released'; // held services aren't yours yet
+  const net = mine.filter(settled).reduce((a, x) => a + x.netUsd, 0);
+  const held = mine.filter((x) => x.escrow && (x.escrow.status === 'held' || x.escrow.status === 'delivered')).reduce((a, x) => a + x.netUsd, 0);
   const myProducts = s.products;
   const linkable = useStoreProducts(s.user.handle);
   const link = `banana.africa/@${s.user.handle}`;
@@ -66,7 +69,7 @@ export default function SellerDashboard() {
           <div className="well grid gap-3 sm:grid-cols-3">
             <div className="card !p-5"><div className="text-[13px] text-[#7A6BAE]">Sales</div><div className="mt-1 text-[34px] font-bold leading-none tracking-tight">{mine.length}</div></div>
             <div className="card-lilac !p-5"><div className="text-[13px] text-[#7A6BAE]">Gross sales</div><div className="mt-1 text-[30px] font-bold leading-none tracking-tight">{money(convert(gross, 'USD', cur), cur, { compact: true })}</div><div className="mt-1 text-[12.5px] text-[#7A6BAE]">≈ {money(gross, 'USD', { decimals: 2 })}</div></div>
-            <div className="card !p-5"><div className="text-[13px] text-[#7A6BAE]">Settled to you</div><div className="mt-1 text-[30px] font-bold leading-none tracking-tight text-[#8A6A12]">{money(net, 'USD', { decimals: 2 })}</div><div className="mt-1 text-[12.5px] text-[#7A6BAE]">after 2% Banana fee</div></div>
+            <div className="card !p-5"><div className="text-[13px] text-[#7A6BAE]">Settled to you</div><div className="mt-1 text-[30px] font-bold leading-none tracking-tight text-[#8A6A12]">{money(net, 'USD', { decimals: 2 })}</div><div className="mt-1 text-[12.5px] text-[#7A6BAE]">after 2% Banana fee{held > 0 && <> · {money(held, 'USD', { decimals: 2 })} held safely</>}</div></div>
           </div>
 
           {/* sales */}
@@ -88,9 +91,12 @@ export default function SellerDashboard() {
                         <div className="truncate text-[16px] font-semibold">{x.title}</div>
                         <div className="mt-0.5 text-[13px] text-[#7A6BAE]">{x.id} · from {country(x.buyerCountry).name} · {x.method} · {ago(x.at)}</div>
                       </div>
-                      <div className="text-right"><div className="text-[17px] font-bold text-[#8A6A12]">+{money(x.netUsd, 'USD', { decimals: 2 })}</div><div className="text-[12px] text-[#7A6BAE]">{x.payout === 'usdc' ? 'settled in USDC' : x.payout === 'local' ? 'paid out locally' : 'to Banana balance'}</div></div>
+                      <div className="text-right"><div className="text-[17px] font-bold text-[#8A6A12]">+{money(x.netUsd, 'USD', { decimals: 2 })}</div><div className="text-[12px] text-[#7A6BAE]">{!settled(x) ? (x.escrow?.status === 'refunded' ? 'refunded' : 'held safely') : x.payout === 'usdc' ? 'settled in USDC' : x.payout === 'local' ? 'paid out locally' : 'to Banana balance'}</div></div>
                     </div>
-                    <div className="mt-2.5 flex items-center justify-between rounded-lg bg-lilac-2 px-3 py-2 text-[12.5px] text-[#5A4A93]"><span>✓ Settled</span><span className="flex gap-3"><button onClick={() => setReceipt(x)} className="font-semibold text-violet">Receipt</button><Link href="/wallet" className="font-semibold text-violet">See in wallet →</Link></span></div>
+                    {x.escrow && x.escrow.status !== 'released' ? (
+                      <div className="mt-2.5"><EscrowTracker saleId={x.id} compact /></div>
+                    ) : null}
+                    <div className="mt-2.5 flex items-center justify-between rounded-lg bg-lilac-2 px-3 py-2 text-[12.5px] text-[#5A4A93]"><span>{!x.escrow ? '✓ Settled' : x.escrow.status === 'released' ? '✓ Paid to you' : x.escrow.status === 'refunded' ? 'Refunded to buyer' : 'Payment held safely'}</span><span className="flex gap-3"><button onClick={() => setReceipt(x)} className="font-semibold text-violet">Receipt</button><Link href="/wallet" className="font-semibold text-violet">See in wallet →</Link></span></div>
                   </div>
                 ))}
               </div>
