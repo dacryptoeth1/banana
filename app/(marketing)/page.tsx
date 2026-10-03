@@ -172,7 +172,7 @@ export default function Landing() {
             <h2 className="mt-4 text-[38px] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[50px]">Buyers pay locally. Creators get paid <Accent>quietly.</Accent></h2>
             <p className="mt-5 max-w-xl text-[18px] leading-relaxed text-body">A buyer in Accra pays with mobile money or card. A creator in Lagos is settled in stablecoin, in their Digital Wallet. Nobody has to see a wallet to buy.</p>
           </div>
-          <div className="mt-10 grid gap-4 lg:grid-cols-[1.15fr_1fr]">
+          <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
             <div className="well reveal-item" style={stagger(1)}><MarketPulse /></div>
             <div className="well reveal-item flex flex-col justify-center" style={stagger(2)}><SaleJourney /></div>
           </div>

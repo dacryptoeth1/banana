@@ -87,7 +87,7 @@ export function ProductView({ handle, productId }: { handle: string; productId: 
   return (
     <div className="relative">
       <Link href={`/store/${handle}`} className="text-[14.5px] text-lilac hover:text-white">← {info.name}</Link>
-      <div className="mt-5 grid items-start gap-6 lg:grid-cols-[1.1fr_1fr]">
+      <div className="mt-5 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.1fr_1fr]">
         <div>
           <div className="well">
             <ProductArt kind={p.art} className="h-[260px] rounded-[20px] sm:h-[320px]" />

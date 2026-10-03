@@ -35,7 +35,7 @@ export default function Home() {
       {/* Row: net cash flow + income vs expenses */}
       <section>
         <div className="mb-3"><SectionLabel n={1} total={4} label="THIS MONTH" /></div>
-        <div className="well grid gap-3 lg:grid-cols-[1.15fr_1fr]">
+        <div className="well grid grid-cols-1 gap-3 lg:grid-cols-[1.15fr_1fr]">
           <div className="card !p-6">
             <div className="text-[13.5px] font-medium text-[#7A6BAE]">Net cash flow · this month</div>
             <div className="mt-1 text-[44px] font-bold leading-none tracking-tight">{m(net, { sign: true })}</div>
