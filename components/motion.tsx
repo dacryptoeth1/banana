@@ -76,7 +76,7 @@ export function CountUp({ value, prefix = '', className }: { value: number; pref
     const stop = whenVisible(el, () => {
       const t0 = performance.now();
       const tick = (t: number) => {
-        const p = Math.min(1, (t - t0) / 1400);
+        const p = Math.min(1, (t - t0) / 900);
         el.textContent = fmt(value * (1 - Math.pow(1 - p, 3)));
         if (p < 1) raf = requestAnimationFrame(tick);
       };

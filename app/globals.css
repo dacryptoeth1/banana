@@ -15,12 +15,12 @@ body {
 }
 
 @layer components {
-  .well { @apply rounded-[28px] border border-white/15 bg-white/[0.075] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.1)]; }
+  .well { @apply rounded-[28px] bg-white/[0.07] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_40px_80px_-40px_rgba(12,2,48,.75)]; }
   .card { @apply rounded-[20px] bg-white p-4 text-ink shadow-card; }
   .card-lilac { @apply rounded-[20px] bg-lilac-2 p-4 text-ink shadow-card; }
   .label-mono { @apply font-mono text-[11.5px] uppercase tracking-[0.2em] text-lilac-3; }
   .input { @apply h-12 w-full rounded-xl border-[1.5px] border-[#DCD2F5] bg-[#FAF8FF] px-4 text-[16px] text-ink outline-none transition focus:border-violet focus:ring-4 focus:ring-violet/15 placeholder:text-[#9C8FCB]; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold transition active:scale-[.97] disabled:opacity-50 disabled:pointer-events-none; }
 }
 
 .grid-bg {
@@ -54,12 +54,12 @@ body {
 /* ------------------------------ Scroll reveal ----------------------------- */
 /* Hidden only when JS can reveal it again (scripting: enabled). */
 .reveal-item, .bar-grow {
-  transition: opacity .7s var(--ease-out), transform .7s var(--ease-out);
-  transition-delay: calc(var(--i, 0) * 90ms);
+  transition: opacity .55s var(--ease-out), transform .55s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 80ms);
 }
-.bar-grow { transform-origin: bottom; transition-duration: .9s; transition-delay: calc(300ms + var(--i, 0) * 60ms); }
+.bar-grow { transform-origin: bottom; transition-duration: .6s; transition-delay: calc(250ms + var(--i, 0) * 50ms); }
 @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
-  [data-reveal]:not([data-shown]) .reveal-item { opacity: 0; transform: translate3d(0, 18px, 0); }
+  [data-reveal]:not([data-shown]) .reveal-item { opacity: 0; transform: translate3d(0, 24px, 0); }
   [data-reveal]:not([data-shown]) .bar-grow { transform: scaleY(0); }
 }
 
@@ -149,25 +149,34 @@ body {
 .activity-card { animation: activity 3.6s var(--ease-out) both; }
 .is-paused .activity-card { animation-play-state: running !important; } /* the interval already stops offscreen */
 
-/* ------------------------------ Sale flow --------------------------------- */
-/* The runner is as tall as the track, with the dot on its bottom edge,
-   so translateY(-100%) → 0 carries the dot from the first node to the last. */
-.flow-runner { position: absolute; inset: 0; transform: translateY(-100%); animation: flow-run 6s linear infinite; }
-.flow-runner::before { content: ''; position: absolute; left: -1px; bottom: 0; width: 3px; height: 56px; border-radius: 3px; background: linear-gradient(to bottom, transparent, rgba(255, 201, 60, .85)); }
-.flow-runner::after { content: ''; position: absolute; left: -4px; bottom: -4px; width: 9px; height: 9px; border-radius: 9999px; background: #FFE39A; box-shadow: 0 0 0 4px rgba(255, 201, 60, .25), 0 0 16px 4px rgba(255, 201, 60, .6); }
-@keyframes flow-run {
-  0% { transform: translateY(-100%); opacity: 0; }
-  4% { opacity: 1; }
-  80% { transform: translateY(0); opacity: 1; }
-  90%, 100% { transform: translateY(0); opacity: 0; }
+/* ------------------------ Hover lift + press, everywhere ------------------- */
+a.card, button.card, a.card-lilac, button.card-lilac, .press {
+  transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out), background-color .2s;
 }
-/* Each node lights up as the dot reaches it: node i at i × 1.2s of the 6s loop. */
-.flow-node::after {
-  content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
-  box-shadow: 0 0 0 2px rgba(255, 201, 60, .75), 0 0 22px 2px rgba(255, 201, 60, .45);
-  opacity: 0; animation: node-hit 6s linear infinite; animation-delay: calc(var(--i, 0) * 1.2s);
+@media (hover: hover) {
+  a.card:hover, button.card:hover, a.card-lilac:hover, button.card-lilac:hover { transform: translate3d(0, -2px, 0); --tw-shadow: 0 28px 44px -24px rgba(20, 4, 70, .7); }
 }
-@keyframes node-hit { 0% { opacity: 0; transform: scale(.9); } 3% { opacity: 1; transform: scale(1.06); } 14% { opacity: 0; transform: scale(1.12); } 100% { opacity: 0; } }
+a.card:active, button.card:active, a.card-lilac:active, button.card-lilac:active, .product-card:active, .cat-tile:active, .press:active { transform: scale(.97); transition-duration: .1s; }
+button:not(.btn):not(.card):not(.card-lilac):active { transform: scale(.97); }
+
+/* ------------------------------- Route enter ------------------------------ */
+@keyframes page-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: none; } }
+.page-enter { animation: page-in .32s var(--ease-out) both; }
+
+/* ------------------------------- Hero mesh -------------------------------- */
+.hero-mesh {
+  background:
+    radial-gradient(40% 50% at 18% 22%, rgba(255, 201, 60, .16), transparent 70%),
+    radial-gradient(45% 55% at 82% 18%, rgba(155, 107, 255, .45), transparent 70%),
+    radial-gradient(60% 50% at 50% 95%, rgba(124, 58, 255, .35), transparent 70%);
+}
+
+/* ----------------------------- Hero word reveal --------------------------- */
+/* Pure CSS so the headline needs no JS: each word rises in, staggered by --w. */
+@keyframes word-in { from { opacity: 0; transform: translate3d(0, .45em, 0) rotate(2deg); } to { opacity: 1; transform: none; } }
+@keyframes spring-rise { 0% { opacity: 0; transform: translate3d(0, 28px, 0) scale(.96); } 60% { opacity: 1; transform: translate3d(0, -4px, 0) scale(1.01); } 100% { opacity: 1; transform: none; } }
+.word { display: inline-block; animation: word-in .55s var(--ease-out) both; animation-delay: calc(var(--w, 0) * 70ms); }
+.spring-in { animation: spring-rise .6s cubic-bezier(.34, 1.3, .64, 1) both; animation-delay: var(--d, 0ms); }
 
 /* ------------------------------- Phones ----------------------------------- */
 @media (max-width: 640px) {
@@ -177,10 +186,10 @@ body {
 /* --------------------------- Reduced motion ------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .float-bob, .float-enter, .particle, .ambient-blob, .live-dot::after, .twinkle, .arc-flow,
-  .hub-ring, .hub-ping, .flow-runner, .flow-node::after { animation: none !important; }
-  .particle, .flow-runner, .hub-ping { display: none; }
-  .activity-card { animation: fade-in .4s ease both; }
+  .hub-ring, .hub-ping, { animation: none !important; }
+  .particle, .hub-ping { display: none; }
+  .activity-card, .word, .spring-in, .page-enter { animation: fade-in .4s ease both !important; }
   .btn-primary::after { display: none; }
-  .parallax, .product-card, .cat-tile, .cat-icon, .cat-arrow, .btn-arrow, .buy-arrow, .product-art > svg, .reveal-item, .bar-grow { transition: none !important; }
-  .product-card:hover, .cat-tile:hover, .btn-primary:hover, .product-card:hover .product-art > svg, .cat-tile:hover .cat-icon { transform: none !important; }
+  .parallax, .product-card, .cat-tile, a.card, button.card, a.card-lilac, button.card-lilac, .press, .cat-icon, .cat-arrow, .btn-arrow, .buy-arrow, .product-art > svg, .reveal-item, .bar-grow { transition: none !important; }
+  .product-card:hover, .cat-tile:hover, .btn-primary:hover, .btn:active, .press:active, a.card:hover, button.card:hover, a.card-lilac:hover, button.card-lilac:hover, .product-card:hover .product-art > svg, .cat-tile:hover .cat-icon { transform: none !important; }
 }

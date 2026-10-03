@@ -6,7 +6,8 @@ import { money } from '@/lib/format';
 import { stagger } from '@/lib/motion';
 import { CountUp, Reveal } from '@/components/motion';
 import { HeroFloat, MarketPulse } from '@/components/LandingMotion';
-import { CategoryTiles, SaleFlow } from '@/components/LandingVisuals';
+import { CategoryTiles } from '@/components/LandingVisuals';
+import { SaleJourney, SaleToasts } from '@/components/LazyMotionIslands';
 
 function Section({ n, id, label, title, copy, cta, children, flip }: { n: number; id: string; label: string; title: string; copy: string; cta: { href: string; label: string }; children: React.ReactNode; flip?: boolean }) {
   return (
@@ -31,22 +32,29 @@ export default function Landing() {
     <>
       {/* ------------------------------ HERO ------------------------------ */}
       <div className="relative">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[820px] overflow-hidden">
+          <div className="hero-mesh absolute inset-0" />
+        </div>
         <Backdrop height={760} />
         <HeroFloat />
-        <section className="relative mx-auto max-w-[1180px] px-4 pb-10 pt-16 text-center sm:px-6 sm:pt-24">
-          <div className="label-mono">[ 00 / 05 ] &nbsp;·&nbsp; LEARN MONEY. EARN MONEY. MOVE MONEY.</div>
-          <h1 className="mx-auto mt-8 max-w-[980px] text-[46px] font-semibold leading-[1] tracking-[-0.045em] sm:text-[84px]">
-            Sell across Africa
-            <span className="block font-serif text-[64px] italic font-normal leading-[0.95] tracking-[-0.03em] text-lilac sm:text-[128px]"><Accent>quietly.</Accent></span>
+        <section className="relative mx-auto max-w-[1180px] px-4 pb-12 pt-14 text-center sm:px-6 sm:pt-24">
+          <div className="label-mono spring-in">[ 00 / 05 ] &nbsp;·&nbsp; LEARN MONEY. EARN MONEY. MOVE MONEY.</div>
+          <h1 className="mx-auto mt-7 max-w-[1040px] text-[54px] font-semibold leading-[.95] tracking-[-0.05em] sm:text-[104px]" aria-label="Sell across Africa, quietly.">
+            <span aria-hidden>
+              {['Sell', 'across', 'Africa,'].map((w, i) => (
+                <span key={w}><span className="word" style={{ '--w': i } as React.CSSProperties}>{w}</span>{' '}</span>
+              ))}
+              <span className="word block pt-1 font-serif text-[76px] font-normal italic leading-[0.95] tracking-[-0.03em] text-gold-soft sm:text-[148px]" style={{ '--w': 3 } as React.CSSProperties}>quietly.</span>
+            </span>
           </h1>
-          <p className="mx-auto mt-8 max-w-[760px] text-[19px] leading-relaxed text-body sm:text-[22px]">List in naira. Get paid from Accra. The customer never sees a wallet.</p>
-          <div className="mt-10 flex flex-col items-center gap-4">
-            <Button href="/signup" size="lg">Create your Banana account <span className="btn-arrow">→</span></Button>
-            <Link href="/home" className="text-[14.5px] text-lilac underline decoration-white/20 underline-offset-4 hover:text-white">or look around the demo first</Link>
+          <p className="spring-in mx-auto mt-7 max-w-[640px] text-[19px] leading-relaxed text-body sm:text-[22px]" style={{ '--d': '520ms' } as React.CSSProperties}>List in naira. Get paid from Accra. The customer never sees a wallet.</p>
+          <div className="mt-9 flex flex-col items-center gap-4">
+            <div className="spring-in" style={{ '--d': '640ms' } as React.CSSProperties}><Button href="/signup" size="lg">Create your Banana account <span className="btn-arrow">→</span></Button></div>
+            <Link href="/home" className="spring-in text-[14.5px] text-lilac underline decoration-white/20 underline-offset-4 hover:text-white" style={{ '--d': '740ms' } as React.CSSProperties}>or look around the demo first</Link>
           </div>
         </section>
         <div className="relative mx-auto max-w-[1000px] px-4 pb-6 sm:px-6">
-          <div className="well rise">
+          <div className="well spring-in" style={{ '--d': '820ms' } as React.CSSProperties}>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 ['Dashboard', 'Know where it goes', '₦207,700 left this month'],
@@ -166,7 +174,7 @@ export default function Landing() {
           </div>
           <div className="mt-10 grid gap-4 lg:grid-cols-[1.15fr_1fr]">
             <div className="well reveal-item" style={stagger(1)}><MarketPulse /></div>
-            <div className="well reveal-item flex flex-col justify-center" style={stagger(2)}><SaleFlow /></div>
+            <div className="well reveal-item flex flex-col justify-center" style={stagger(2)}><SaleJourney /></div>
           </div>
           <div className="reveal-item mt-12 flex items-end justify-between gap-4" style={stagger(3)}>
             <div className="label-mono">Browse the market</div>
@@ -201,6 +209,7 @@ export default function Landing() {
           <div className="reveal-item mt-9" style={stagger(1)}><Button href="/signup" size="lg">Create your Banana account <span className="btn-arrow">→</span></Button></div>
         </Reveal>
       </section>
+      <SaleToasts />
     </>
   );
 }

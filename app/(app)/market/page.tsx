@@ -6,6 +6,7 @@ import { Button, Chip, PageHead } from '@/components/ui';
 import { CATEGORIES_MARKET, PRODUCTS, STORES, store } from '@/lib/mock-data';
 import { money } from '@/lib/format';
 import { useBanana } from '@/lib/state';
+import { SaleToasts } from '@/components/LazyMotionIslands';
 
 export default function MarketHome() {
   const s = useBanana();
@@ -59,7 +60,7 @@ export default function MarketHome() {
         <div className="label-mono">FEATURED STORES</div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {STORES.map((st) => (
-            <Link key={st.handle} href={`/store/${st.handle}`} className="rounded-[22px] border border-white/15 bg-white/[0.075] p-4 transition hover:bg-white/10">
+            <Link key={st.handle} href={`/store/${st.handle}`} className="press rounded-[22px] bg-white/[0.07] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_30px_60px_-36px_rgba(12,2,48,.8)] hover:-translate-y-0.5 hover:bg-white/10">
               <div className="flex items-center gap-3">
                 <Avatar name={st.name} hue={st.hue} size={48} />
                 <div className="min-w-0">
@@ -72,6 +73,7 @@ export default function MarketHome() {
           ))}
         </div>
       </div>
+      <SaleToasts className="bottom-24 md:bottom-5" />
     </div>
   );
 }
