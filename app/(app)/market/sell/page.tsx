@@ -22,7 +22,7 @@ export default function SellerDashboard() {
   const s = useBanana();
   const cur = s.user.currency;
   const mine = s.sales.filter((x) => x.handle === s.user.handle);
-  const gross = mine.reduce((a, x) => a + x.grossUsd, 0);
+  const gross = mine.filter((x) => x.escrow?.status !== 'refunded').reduce((a, x) => a + x.grossUsd, 0);
   const settled = (x: Sale) => !x.escrow || x.escrow.status === 'released'; // held services aren't yours yet
   const net = mine.filter(settled).reduce((a, x) => a + x.netUsd, 0);
   const held = mine.filter((x) => x.escrow && (x.escrow.status === 'held' || x.escrow.status === 'delivered')).reduce((a, x) => a + x.netUsd, 0);
