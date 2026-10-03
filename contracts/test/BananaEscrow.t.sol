@@ -216,3 +216,39 @@ contract BananaEscrowTest is Test {
         new BananaEscrow(relayer, address(0xBEEF), TIMEOUT); // no code: not a token
     }
 }
+
+import { TestUSDC } from "../src/TestUSDC.sol";
+
+contract TestUSDCTest is Test {
+    address owner = makeAddr("owner");
+    address alice = makeAddr("alice");
+
+    function test_onlyOwnerMints_and_escrowRoundTrip() public {
+        TestUSDC t = new TestUSDC(owner);
+        assertEq(t.decimals(), 6);
+        vm.prank(alice);
+        vm.expectRevert(TestUSDC.NotOwner.selector);
+        t.mint(alice, 1);
+
+        vm.startPrank(owner);
+        t.mint(owner, 100e6);
+        BananaEscrow e = new BananaEscrow(owner, address(t), 600);
+        t.approve(address(e), type(uint256).max);
+        e.depositToken(keccak256("x"), alice, 49e6);
+        e.release(keccak256("x"));
+        vm.stopPrank();
+        assertEq(t.balanceOf(alice), 49e6);
+        assertEq(t.allowance(owner, address(e)), type(uint256).max); // infinite approval isn't decremented
+    }
+
+    function test_transferFromRespectsAllowance() public {
+        TestUSDC t = new TestUSDC(owner);
+        vm.prank(owner);
+        t.mint(owner, 10e6);
+        vm.prank(owner);
+        t.approve(alice, 5e6);
+        vm.prank(alice);
+        vm.expectRevert(TestUSDC.Insufficient.selector);
+        t.transferFrom(owner, alice, 6e6);
+    }
+}
