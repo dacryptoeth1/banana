@@ -56,7 +56,7 @@ export default function SellerDashboard() {
     <div>
       <PageHead label="[ SELLER ] · DASHBOARD" title="Your" accent="store." sub="Buyers pay in local money. You’re settled in stablecoin. Nobody needs to know how it works." right={<Button href={`/store/${s.user.handle}`} variant="light">View my store →</Button>} />
 
-      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-5">
           {/* stats */}
           <div className="well grid gap-3 sm:grid-cols-3">

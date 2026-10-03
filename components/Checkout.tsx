@@ -9,6 +9,9 @@ import { convert, money, shortHash, cn } from '@/lib/format';
 import { recordSale, switchRole, useBanana, type Sale } from '@/lib/state';
 import { isLive } from '@/lib/mode';
 import { toKobo } from '@/lib/pay';
+import { m } from 'framer-motion';
+import { SuccessBurst } from './SuccessBurst';
+import { softSpring } from '@/lib/motion';
 
 type Method = 'Paystack' | 'MoMo' | 'Card';
 
@@ -107,10 +110,14 @@ export function Checkout({ product }: { product: Product }) {
 
   if (stage === 'done' && sale) {
     return (
-      <div className="card pop !p-6 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gold text-[30px]">🔓</div>
-        <h2 className="mt-4 text-[28px] font-semibold tracking-[-0.03em]">Unlocked.</h2>
-        <p className="text-[17px] text-[#4C3E82]">Receipt saved. We emailed a copy to <b>{sale.buyerEmail}</b>.</p>
+      <div className="card !p-6 text-center">
+        <SuccessBurst size={76} />
+        <m.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }}>
+          <h2 className="mt-5 text-[28px] font-semibold tracking-[-0.03em]">Unlocked.</h2>
+          <p className="text-[17px] text-[#4C3E82]">Receipt saved. We emailed a copy to <b>{sale.buyerEmail}</b>.</p>
+        </m.div>
+
+        <m.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ ...softSpring, delay: 0.5 }}>
 
         <div className="mt-5 flex items-center gap-3 rounded-2xl bg-lilac-2 p-3.5 text-left">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[20px]">📦</span>
@@ -146,6 +153,7 @@ export function Checkout({ product }: { product: Product }) {
           <Link href={`/store/${product.handle}`} className="font-semibold text-violet">Back to store</Link>
           <Link href="/wallet" className="font-semibold text-violet">Open wallet</Link>
         </div>
+        </m.div>
       </div>
     );
   }

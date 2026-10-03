@@ -1,6 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { AnimatePresence, m } from 'framer-motion';
+import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { spring } from '@/lib/motion';
 import { Button, Field, PageHead, Sheet } from '@/components/ui';
 import { country } from '@/lib/mock-data';
 import { RATES, SYMBOL, ago, cn, convert, money, shortHash, type Currency } from '@/lib/format';
@@ -39,11 +42,11 @@ export default function WalletPage() {
     <div>
       <PageHead label="[ 05 / 05 ] · WALLET" title="Your" accent="Digital Wallet." />
 
-      <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.1fr_1fr]">
         <div className="well">
           <div className="card !p-6">
             <div className="text-[13.5px] font-medium text-[#7A6BAE]">Balance</div>
-            <div className="mt-1 text-[48px] font-bold leading-none tracking-tight">{local(total, { decimals: cur === 'USD' ? 2 : 0 })}</div>
+            <div className="mt-1 text-[48px] font-bold leading-none tracking-tight"><AnimatedNumber value={total} format={(n) => local(n, { decimals: cur === 'USD' ? 2 : 0 })} /></div>
             <div className="mt-2 text-[15px] text-[#7A6BAE]">≈ {money(s.usdc, 'USD', { decimals: 2 })} USDC{s.localUsd > 0 && <> · {local(s.localUsd)} paid out as {cur}</>}{s.banana > 0 && <> · {money(s.banana, 'USD', { decimals: 2 })} Banana balance</>}</div>
             <div className="mt-6 grid grid-cols-3 gap-2.5">
               {([['receive', 'Receive', '↓'], ['send', 'Send', '↑'], ['cashout', 'Cash out', '⇢']] as const).map(([k, label, icon]) => (
@@ -69,13 +72,18 @@ export default function WalletPage() {
             </div>
           ) : (
             <div className="space-y-2.5">
-              {s.activity.map((a) => (
-                <button key={a.id} onClick={() => setReceipt(a)} className="card flex w-full items-center gap-3 !p-3.5 text-left transition hover:-translate-y-0.5">
-                  <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[17px]', a.usd >= 0 ? 'bg-gold/30' : 'bg-rose-soft/30')}>{a.kind === 'sale' ? '🛍️' : a.kind === 'bounty' ? '🏆' : a.kind === 'send' ? '💌' : a.kind === 'cashout' ? '🏧' : '↓'}</span>
-                  <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold">{a.title}</span><span className="block truncate text-[12.5px] text-[#7A6BAE]">{a.sub} · {ago(a.at)}</span></span>
-                  <span className={cn('text-[15.5px] font-bold', a.usd >= 0 ? 'text-[#8A6A12]' : 'text-rose-muted')}>{local(a.usd, { sign: true })}</span>
-                </button>
-              ))}
+              {/* initial={false}: rows already there don't animate; new ones slide in on top. */}
+              <AnimatePresence initial={false}>
+                {s.activity.map((a) => (
+                  <m.div key={a.id} initial={{ opacity: 0, y: -14, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={spring}>
+                  <button onClick={() => setReceipt(a)} className="card flex w-full items-center gap-3 !p-3.5 text-left">
+                    <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[17px]', a.usd >= 0 ? 'bg-gold/30' : 'bg-rose-soft/30')}>{a.kind === 'sale' ? '🛍️' : a.kind === 'bounty' ? '🏆' : a.kind === 'send' ? '💌' : a.kind === 'cashout' ? '🏧' : '↓'}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold">{a.title}</span><span className="block truncate text-[12.5px] text-[#7A6BAE]">{a.sub} · {ago(a.at)}</span></span>
+                    <span className={cn('text-[15.5px] font-bold', a.usd >= 0 ? 'text-[#8A6A12]' : 'text-rose-muted')}>{local(a.usd, { sign: true })}</span>
+                  </button>
+                  </m.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
         </div>
