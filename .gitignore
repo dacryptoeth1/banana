@@ -7,3 +7,6 @@ next-env.d.ts
 
 .env
 .env*.local
+
+# local one-off scripts
+*.tmp.ts
