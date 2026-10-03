@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useSyncExternalStore } from 'react';
 import { Flag } from '@/components/brand';
 import { Progress, SectionLabel } from '@/components/ui';
 import { BILLS, CATEGORIES, GOALS, LESSONS, MONTH, OPPORTUNITIES, PRODUCTS, SOURCES, SUBSCRIPTIONS, WEEK, country } from '@/lib/mock-data';
@@ -8,9 +9,13 @@ import { useBanana } from '@/lib/state';
 
 const hour = () => new Date().getHours();
 const greet = () => (hour() < 12 ? 'Good morning' : hour() < 17 ? 'Good afternoon' : 'Good evening');
+const noSubscribe = () => () => {};
+/** The page is prerendered at build time, in UTC. A neutral "Hello" there, the visitor's own time of day once hydrated. */
+const useGreeting = () => useSyncExternalStore(noSubscribe, greet, () => 'Hello');
 
 export default function Home() {
   const s = useBanana();
+  const greeting = useGreeting();
   const cur = s.user.currency;
   const m = (ngn: number, o = {}) => money(convert(ngn, 'NGN', cur), cur, o);
   const net = MONTH.income - MONTH.expenses;
@@ -27,7 +32,7 @@ export default function Home() {
       <div className="rise">
         <div className="label-mono flex items-center gap-2"><Flag code={s.user.country} /> {c.name} · {cur}</div>
         <h1 className="mt-3 text-[40px] font-semibold leading-[1.02] tracking-[-0.04em] sm:text-[56px]">
-          {greet()}, <span className="font-serif italic font-normal text-lilac">{s.user.name}.</span>
+          {greeting}, <span className="font-serif italic font-normal text-lilac">{s.user.name}.</span>
         </h1>
         <p className="mt-3 text-[17px] text-body">Here’s where your money went — and where it’s going this week.</p>
       </div>
