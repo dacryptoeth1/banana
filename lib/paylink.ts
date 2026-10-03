@@ -28,9 +28,11 @@ export function priceFor(p: Product, cc: CountryCode) {
 
 const TZ: Record<string, CountryCode> = { 'Africa/Lagos': 'NG', 'Africa/Accra': 'GH', 'Africa/Nairobi': 'KE', 'Africa/Johannesburg': 'ZA' };
 
-/** Best guess at where the buyer is paying from: their time zone, then their language region. Never asks. */
+/** Where the buyer is paying from: ?from=GH on the link, else their time zone, else their language region. Never asks. */
 export function guessCountry(fallback: CountryCode = 'GH'): CountryCode {
   try {
+    const q = new URLSearchParams(window.location.search).get('from')?.toUpperCase();
+    if (q && COUNTRIES.some((c) => c.code === q)) return q as CountryCode;
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (TZ[tz]) return TZ[tz];
     for (const l of navigator.languages ?? []) {

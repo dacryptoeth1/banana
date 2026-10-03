@@ -44,7 +44,7 @@ export default async function OgImage({ params }: { params: Promise<{ creator: s
 
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', padding: 64, fontFamily: '"Inter Tight", "Inter Tight Ext"', color: '#fff', background: 'radial-gradient(60% 80% at 85% 10%, #7C3AFF 0%, transparent 70%), radial-gradient(50% 60% at 10% 90%, rgba(255,201,60,.22) 0%, transparent 70%), linear-gradient(160deg,#2B1470 0%,#3D1F8C 55%,#5B2FB5 100%)' }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', padding: 64, fontFamily: '"Inter Tight", "Inter Tight Ext"', color: '#fff', background: 'linear-gradient(160deg,#2B1470 0%,#3D1F8C 55%,#5B2FB5 100%)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between', paddingRight: 48 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 34, fontWeight: 700 }}>
             <BananaMark size={52} /> Banana
@@ -62,7 +62,7 @@ export default async function OgImage({ params }: { params: Promise<{ creator: s
           <div style={{ fontSize: 28, color: '#F3EDFF' }}>Pay with mobile money or card, in your own currency.</div>
         </div>
         <div style={{ display: 'flex', width: 380, alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', width: 360, height: 360, borderRadius: 48, background: ART[p?.art ?? 'kit'] ?? ART.kit, alignItems: 'center', justifyContent: 'center', boxShadow: '0 40px 80px -30px rgba(10,0,50,.8)' }}>
+          <div style={{ display: 'flex', width: 360, height: 360, borderRadius: 48, background: ART[p?.art ?? 'kit'] ?? ART.kit, alignItems: 'center', justifyContent: 'center' }}>
             <BananaMark size={200} />
           </div>
         </div>
