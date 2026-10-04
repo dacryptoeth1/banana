@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
 import { stagger } from '@/lib/motion';
 
 /** Barely-there moving light behind the marketing pages. Transform-only, no blur filters. */
