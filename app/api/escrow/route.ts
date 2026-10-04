@@ -52,7 +52,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, mode: 'testnet', tx });
     } catch (e) {
       // Not a failure: the onchain refund window simply hasn't opened. The tracker counts down and retries.
-      if (e instanceof EscrowError && e.status === 425) return NextResponse.json({ ok: false, error: e.message, ...e.extra }, { status: 425 });
+      // Answered as 200 + ok:false, so browsers don't log an expected wait as a failed request.
+      if (e instanceof EscrowError && e.status === 425) return NextResponse.json({ ok: false, error: e.message, ...e.extra });
       console.error(`[escrow] testnet ${action} ${order.saleId} failed, completing in mock mode:`, e instanceof Error ? e.message : e);
       return NextResponse.json({ ok: true, mode: 'mock-fallback', tx: mockTx() });
     } finally {
