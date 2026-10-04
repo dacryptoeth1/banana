@@ -2,7 +2,7 @@
  * Server only (imported by app/api/escrow). Banana's relayer talks to BananaEscrow on Monad testnet.
  * Buyers and creators never sign anything: the relayer deposits, releases and refunds for them.
  */
-import { createPublicClient, createWalletClient, defineChain, encodePacked, http, keccak256, parseAbi, parseAbiItem, parseUnits, toBytes, type Hex } from 'viem';
+import { createPublicClient, createWalletClient, defineChain, encodePacked, http, keccak256, parseAbi, parseAbiItem, parseEther, parseUnits, toBytes, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { ChainInfo } from './chain';
 
@@ -10,7 +10,7 @@ export const monadTestnet = defineChain({
   id: 10143,
   name: 'Monad Testnet',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
-  rpcUrls: { default: { http: [process.env.MONAD_RPC_URL || 'https://testnet-rpc.monad.xyz'] } },
+  rpcUrls: { default: { http: ['https://testnet-rpc.monad.xyz'] } },
 });
 
 const ABI = parseAbi([
@@ -57,7 +57,8 @@ export function creatorAddress(handle: string) {
 function clients() {
   const { pk, escrow } = config();
   const account = privateKeyToAccount(pk);
-  const transport = http(undefined, { timeout: 15_000, retryCount: 2 });
+  // Read per call (not at import), so MONAD_RPC_URL changes apply without a cold start.
+  const transport = http(process.env.MONAD_RPC_URL || undefined, { timeout: 6_000, retryCount: 1 });
   return {
     escrow,
     pub: createPublicClient({ chain: monadTestnet, transport }),
@@ -87,7 +88,11 @@ async function already(pub: Pub, escrow: Hex, action: keyof typeof EVENTS, order
   return null;
 }
 
+/** Below this the relayer stops sending, so a busy public demo can't run it out of gas. */
+const GAS_FLOOR = parseEther('0.5');
+
 async function send(c: ReturnType<typeof clients>, fn: 'depositToken' | 'release' | 'refund', args: readonly unknown[]): Promise<ChainInfo> {
+  if ((await c.pub.getBalance({ address: c.wallet.account.address })) < GAS_FLOOR) throw new EscrowError('Relayer is below its gas floor.', 503);
   // Simulate first: a revert comes back as a clear error instead of a failed, fee-burning transaction.
   const { request } = await c.pub.simulateContract({ address: c.escrow, abi: ABI, functionName: fn, args: args as never, account: c.wallet.account });
   const hash = await c.wallet.writeContract(request);

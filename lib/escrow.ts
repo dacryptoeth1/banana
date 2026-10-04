@@ -8,7 +8,7 @@ export const isEscrowed = (p: Pick<Product, 'category'>) => p.category === 'Serv
 export const ESCROW_STEPS = ['Payment held safely', 'Delivered', 'Paid to creator'] as const;
 
 export type EscrowAction = 'hold' | 'release' | 'refund';
-export type EscrowResult = { ok: true; mode: 'mock' | 'testnet'; tx: ChainInfo } | { ok: false; error: string; refundableAt?: number };
+export type EscrowResult = { ok: true; mode: 'mock' | 'testnet' | 'mock-fallback'; tx: ChainInfo } | { ok: false; error: string; refundableAt?: number };
 
 /** Ask the server to hold / release / refund. Never throws: the UI shows a calm retry instead. */
 export async function escrowCall(action: EscrowAction, body: { saleId: string; heldAt: number; seller: string; amountUsd: number }): Promise<EscrowResult> {
