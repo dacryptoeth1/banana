@@ -10,3 +10,6 @@ next-env.d.ts
 
 # local one-off scripts
 *.tmp.ts
+
+# rendered submission videos (large, local only)
+videos/

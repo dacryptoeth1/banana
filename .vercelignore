@@ -10,3 +10,4 @@ contracts/cache
 contracts/broadcast
 contracts/lib
 *.tmp.ts
+videos
