@@ -99,9 +99,11 @@ export function useCheckout(product: Product, returnTo: 'store' | 'pay' = 'store
 }
 
 /** "Unlocked." Burst, download, the seller's side, and the receipt sliding up. */
-export function CheckoutSuccess({ product, sale }: { product: Product; sale: Sale }) {
+export function CheckoutSuccess({ product, sale: paid }: { product: Product; sale: Sale }) {
   const router = useRouter();
   const me = useBanana();
+  // Read the live sale: escrow holds and releases add their real transactions after payment.
+  const sale = me.sales.find((x) => x.id === paid.id) ?? paid;
   const { amount, currency } = product.price;
 
   function download() {
